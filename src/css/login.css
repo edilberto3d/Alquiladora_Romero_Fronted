@@ -1,0 +1,126 @@
+/* Estilos principales para el contenedor */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Cambia align-items a flex-start para que el contenido esté más arriba */
+    height: 100vh;
+    background-color: #f1f1f1;
+    background-image: url('../img/carousel1.jpg');
+    background-size: cover;
+    background-position: center;
+    padding-top: 60px; /* Añadimos un margen superior adicional para ajustar la posición */
+  }
+  
+  /* Caja del formulario */
+  .login-box {
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    max-width: 350px;
+    width: 100%;
+    text-align: center;
+  }
+  
+  /* Título */
+  .login-title {
+    font-size: 24px;
+    color: #007bff;
+    margin-bottom: 25px;
+  }
+  
+  /* Estilos para el grupo de formularios */
+  .form-group {
+    margin-bottom: 20px;
+    text-align: left;
+  }
+  
+  .form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+  
+  /* Botón de inicio de sesión */
+  .login-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .login-btn:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Enlaces de registro y recuperación */
+  .login-links {
+    margin-top: 15px;
+  }
+  
+  .login-links a {
+    display: block;
+    margin: 10px 0;
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .login-links a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Centrando el reCAPTCHA */
+.recaptcha-container {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+  }
+
+
+
+  /**/
+  .steps-list {
+    text-align: left;
+    margin-bottom: 20px;
+    padding-left: 20px;
+  }
+  
+  .method-selection {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  
+  .method-btn {
+    margin: 0 10px;
+    padding: 10px 20px;
+    background-color: #f1f1f1;
+    border: 2px solid #007bff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .method-btn.active {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .method-btn:hover {
+    background-color: #0056b3;
+    color: white;
+  }
+  

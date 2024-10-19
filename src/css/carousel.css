@@ -1,0 +1,30 @@
+.carousel-container {
+  width: 80%;
+  margin: 0 auto;
+  position: relative;
+}
+
+.carousel-slide {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; /* Asegura que las imágenes y videos no se desborden */
+}
+
+.carousel-image {
+  width: 100%;
+  height: 400px; /* Ajusta la altura aquí */
+  object-fit: cover; /* Asegura que la imagen cubra el área del contenedor */
+  transition: transform 0.5s ease; /* Efecto de transición */
+}
+
+.carousel-video {
+  width: 100%;
+  height: 500px; /* Ajusta la altura aquí para los videos */
+  transition: transform 0.5s ease; /* Efecto de transición para el video */
+}
+
+.carousel-image:hover,
+.carousel-video:hover {
+  transform: scale(1.05); /* Efecto de zoom al pasar el mouse */
+}

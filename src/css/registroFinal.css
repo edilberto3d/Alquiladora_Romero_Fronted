@@ -1,0 +1,116 @@
+/* Estilos generales del paso 4 */
+.registro-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 25px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+  
+  .registro-titulo {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #007bff; /* Color especial para el título */
+    font-size: 1.8rem; /* Tamaño de fuente mayor */
+    font-weight: bold;
+    font-family: 'Rubik', sans-serif; /* Fuente moderna */
+  }
+  
+  .registro-instruccion {
+    text-align: center;
+    font-size: 1rem;
+    color: #ff5722;
+    margin-bottom: 25px;
+    font-family: 'Rubik', sans-serif; /* Fuente moderna */
+    font-style: italic; /* Añadimos un estilo en cursiva */
+  }
+  
+  /* Formulario */
+  .registro-form {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .registro-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: space-between;
+  }
+  
+  .registro-column {
+    flex: 1;
+    min-width: 250px; /* Más espacio para los campos */
+  }
+  
+  .registro-column label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: bold;
+  }
+  
+  .registro-column input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+  }
+  
+  .registro-column input:focus {
+    border-color: #007bff;
+    outline: none;
+  }
+  
+  /* Botón de registro */
+  .registro-btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    margin-top: 30px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+  }
+  
+  .registro-btn:hover {
+    background-color: #218838;
+    transform: translateY(-3px);
+  }
+  
+  .registro-btn:focus {
+    outline: none;
+  }
+  
+  /* Responsividad */
+  @media (max-width: 768px) {
+    .registro-row {
+      flex-direction: column;
+    }
+  
+    .registro-container {
+      padding: 15px;
+    }
+  
+    .registro-titulo {
+      font-size: 1.6rem;
+    }
+  
+    .registro-instruccion {
+      font-size: 0.9rem;
+    }
+  
+    .registro-btn {
+      font-size: 1rem;
+      padding: 12px;
+    }
+  }
+  

@@ -1,24 +1,40 @@
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import LayaoutEncabezado from './components/shared/layaouts/encabezados'
+
+//==================================PUBLICO=====================================================================
+import Inicio from "./components/public/incio";
+import Login from "./components/shared/autenticacion/login";
+import Registro from "./components/shared/autenticacion/registro";
+import {ProcesoRegistro } from "./components/shared/autenticacion/procesoRegistro";
+
+
+//==================================CLIENTE=====================================================================
+import  InicioCliente  from "./components/client/inicioCliente.jsx";
+
+//===========================Rutas Privados=================================
+import  RutaPrivada  from "./components/shared/layaouts/contextoAutentication.jsx";
+import ErrorBoundary from "./components/shared/Errors/registroErrore.jsx";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+    <ErrorBoundary>
+     <Routes>
+      <Route path="/" element={<LayaoutEncabezado><Inicio /> </LayaoutEncabezado>} />
+      <Route path="/login" element={<LayaoutEncabezado><Login /> </LayaoutEncabezado>} />
+      <Route path="/RegistroValidacionCorreo" element={<LayaoutEncabezado><ProcesoRegistro  /> </LayaoutEncabezado>} />
+      <Route path="/registro" element={<LayaoutEncabezado><Registro /> </LayaoutEncabezado>} />
+
+         {/* Rutas para Cliente */}
+         <Route path="/cliente" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< Inicio /></LayaoutEncabezado></RutaPrivada>  }/>
+         {/* <Route path="/cliente/perfil" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< UserProfile /></LayaoutEncabezado></RutaPrivada>  }/> */}
+
+      </Routes> 
+      </ErrorBoundary>
+     
+          {/* <Header/> */}
+        
+    </>
   );
 }
 

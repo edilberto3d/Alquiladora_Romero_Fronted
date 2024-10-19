@@ -1,0 +1,293 @@
+@import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+
+
+/* Lista de pasos */
+.steps-list {
+  list-style-type: none;
+  padding-left: 0;
+  font-family: 'Poppins', sans-serif; /* Fuente moderna */
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.steps-list li {
+  margin-bottom: 15px;
+  padding: 12px 15px;
+  background-color: #f9f9f9;
+  border-left: 4px solid #007bff;
+  border-radius: 8px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.steps-list li strong {
+  color: #007bff;
+  font-size: 18px;
+}
+
+.steps-list li:hover {
+  background-color: #f1f1f1;
+  transform: translateY(-2px);
+}
+
+/* Descripción */
+.description {
+  color: #333;
+  font-weight: bold;
+  text-align: left;
+  font-family: 'Rubik', sans-serif;
+  line-height: 1.6;
+  font-size: 17px;
+  margin-bottom: 20px;
+}
+
+/* Botón "Siguiente" */
+.next-btn, .login-btn {
+  display: inline-block;
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #007bff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  margin-top: 20px;
+}
+
+.next-btn:hover, .login-btn:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+.next-btn:focus, .login-btn:focus {
+  outline: none;
+}
+
+/* Añadimos un icono de flecha en el botón */
+.next-btn .fa-arrow-right {
+  margin-left: 8px;
+}
+
+/* Animación del formulario */
+.login-box {
+  opacity: 1;
+  transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+}
+
+.fade-out {
+  opacity: 0;
+  transform: scale(0.4); /* Reduce ligeramente el tamaño antes de desaparecer */
+}
+
+.slide-in {
+  animation: slideIn 0.4s forwards;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+
+.method-btn {
+  flex: 1;
+  padding: 10px;
+  margin: 0 5px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #6c757d;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.method-btn.active {
+  background-color: #28a745; /* Verde cuando está activo */
+}
+
+.method-btn:hover {
+  background-color: #5a6268;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+  .steps-list li {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .next-btn, .login-btn {
+    font-size: 14px;
+    padding: 10px 20px;
+  }
+
+  .method-btn {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .description {
+    font-size: 15px;
+  }
+}
+
+/*Diseño de validar Correo*/
+.input-wrapper input {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    background: none;
+    border-radius: 8px;
+    font-size: 16px;
+  }
+
+  .input-icon {
+    color: #007bff;
+    margin-right: 10px;
+    font-size: 20px;
+  }
+
+  /* Botón de validación */
+.validate-btn {
+    display: inline-block;
+    width: 100%;
+    padding: 12px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #28a745;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-top: 20px;
+  }
+  
+  .validate-btn:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+  }
+  
+  .validate-btn:focus {
+    outline: none;
+  }
+  
+  .validate-btn .fa-check-circle {
+    margin-left: 10px;
+  }
+  
+  .recaptcha-container {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+  }
+  
+  /* Responsividad */
+  @media (max-width: 768px) {
+    .validate-container {
+      padding: 20px;
+    }
+  
+    .login-title {
+      font-size: 20px;
+    }
+  
+    .input-wrapper input {
+      font-size: 14px;
+    }
+  
+    .validate-btn {
+      font-size: 16px;
+    }
+  }
+
+
+  /* Barra de progreso */
+.progress-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  
+  .circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #f1f1f1;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  
+  .circle.active {
+    background-color: #ffa500; /* Color del paso actual */
+    color: #fff;
+  }
+  
+  .line {
+    flex-grow: 1;
+    height: 2px;
+    background-color: #ddd;
+  }
+  
+  /*================================Diseño de alert error===========================*/
+  .custom-alert-error {
+    background-color: #ffe6e6; /* Fondo rojo suave */
+    color: #a94442; /* Color del texto de error */
+    border: 1px solid #f5c6cb; /* Borde fino */
+    border-radius: 4px; /* Borde redondeado */
+    padding: 8px; /* Padding reducido */
+    font-size: 14px; /* Tamaño de letra más pequeño */
+    margin-top: 12px; /* Margen superior */
+    display: flex;
+    align-items: center; /* Centrado vertical del contenido */
+    justify-content: flex-start; /* Justificar a la izquierda */
+  }
+  
+  .custom-alert-error .alert-icon {
+    font-size: 16px; /* Tamaño del ícono */
+    margin-right: 8px; /* Espaciado entre el ícono y el texto */
+  }
+  
+  .custom-alert-error .alert-title {
+    font-weight: bold; /* Título más prominente */
+    font-size: 15px; /* Tamaño más pequeño para el título */
+    margin-right: 4px;
+  }
+  
+  .custom-alert-error .alert-message {
+    font-size: 14px; /* Texto más pequeño para el mensaje */
+  }
+  
+  /*==============================ALERT DE ENVIO TOKEN AL CORREO==========================================*/
+  .small-swal {
+    width: 300px !important; /* Ajusta el ancho de la alerta */
+    max-width: 90% !important; /* Ajusta el ancho en pantallas pequeñas */
+    font-size: 14px !important; /* Ajusta el tamaño del texto */
+  }
+  
+  .swal2-title {
+    font-size: 18px !important; /* Ajusta el tamaño del título */
+  }
+  
+  .swal2-icon {
+    width: 60px !important;
+    height: 60px !important;
+  }
+  
