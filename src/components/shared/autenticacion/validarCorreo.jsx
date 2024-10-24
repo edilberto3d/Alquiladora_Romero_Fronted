@@ -18,19 +18,34 @@ export const ValidarCorreo = ({ onValidationSuccess , setGuardarCorreo}) => {
   const [loading, setLoading] = useState(false);
   const secretKey = 'TokenValidation2024';
   const [captchaHasError, setCaptchaHasError] = useState(false);
+  const recaptchaRef = useRef(null);
+  const [csrfToken, setCsrfToken] = useState("");
   
 
 
   // Consulta de los usuarios registrados
+  // Obtener el token CSRF desde el backend
   useEffect(() => {
-    const ConsultarUsuarios = async () => {
-      axios
-        .get("http://localhost:3001/api/usuarios")
-        .then((response) => setUsuarios(response.data))
-        .catch((error) =>
-          console.error("Error al cargar los usuarios: ", error)
-        );
+    const getCsrfToken = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/api/get-csrf-token', { withCredentials: true });
+        setCsrfToken(response.data.csrfToken); 
+      } catch (error) {
+        console.error("Error al obtener el token CSRF:", error);
+      }
     };
+
+    getCsrfToken();
+
+    const ConsultarUsuarios = async () => {
+      try {
+        const response = await axios.get("http://localhost:3001/api/usuarios");
+        setUsuarios(response.data);
+      } catch (error) {
+        console.error("Error al cargar los usuarios: ", error);
+      }
+    };
+
     ConsultarUsuarios();
   }, []);
 
@@ -38,14 +53,13 @@ export const ValidarCorreo = ({ onValidationSuccess , setGuardarCorreo}) => {
   const onCaptchaChange = (value) => {
     setCaptchaValue(value);
     setErrorMessage("");
-    setCaptchaHasError(false);
-    }
+  };
 
  // Manejar error al cargar el CAPTCHA
  const handleCaptchaError = () => {
-  setErrorMessage("Error al cargar el reCAPTCHA.");
-  setErrorMessage(true);
-}
+  setErrorMessage("Error al cargar el reCAPTCHA, por favor intenta de nuevo.");
+  setCaptchaHasError(true);
+};
 
   // Validar formato de correo usando el servidor====================================================================
   const isValidEmail = async (email) => {
@@ -54,8 +68,12 @@ export const ValidarCorreo = ({ onValidationSuccess , setGuardarCorreo}) => {
         "http://localhost:3001/api/email/validate-email",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken  
+          },
           body: JSON.stringify({ email }),
+          credentials: 'include'
         }
       );
       if (!response.ok) {
@@ -87,7 +105,7 @@ export const ValidarCorreo = ({ onValidationSuccess , setGuardarCorreo}) => {
     setErrorMessage("");
 
     if (!captchaValue) {
-      setErrorMessage("Completa el reCAPTCHA antes de continuar.");
+      setErrorMessage("Por favor completa el reCAPTCHA.");
       setLoading(false);
       return;
     }
@@ -136,6 +154,12 @@ export const ValidarCorreo = ({ onValidationSuccess , setGuardarCorreo}) => {
           shortUUID: shortUUID,
           nombreU: "Bienvenido",
           nombreR: "",
+        },
+        {
+          headers: {
+            "X-CSRF-Token": csrfToken,  
+          },
+          withCredentials: true,
         }
       );
       //Guardamos el correo en una variable
@@ -159,6 +183,9 @@ export const ValidarCorreo = ({ onValidationSuccess , setGuardarCorreo}) => {
       console.error("Error al procesar la solicitud:", error.message);
 
       setErrorMessage("Lo sentimos, vuelve a intentar mas tarde.");
+      //Restablesemos el captcha
+      recaptchaRef.current.reset(); 
+
 
     } finally {
       setLoading(false);
@@ -198,6 +225,7 @@ export const ValidarCorreo = ({ onValidationSuccess , setGuardarCorreo}) => {
           </div>
 
           <ReCAPTCHA
+           ref={recaptchaRef}
             className="recaptcha-container"
             sitekey="6Le0dGAqAAAAAPQMdd-d6ZH8nZWTgC9HEHpO6R-7"
             onChange={onCaptchaChange}

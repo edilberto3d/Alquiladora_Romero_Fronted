@@ -1,0 +1,5 @@
+/* sweeltAlert12.css */
+.swal2-custom-zindex {
+    z-index: 2000 !important; /* Asegura que sea mayor que los modales */
+  }
+  

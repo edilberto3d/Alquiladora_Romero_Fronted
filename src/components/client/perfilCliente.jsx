@@ -1,211 +1,525 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCamera, faEdit } from '@fortawesome/free-solid-svg-icons';
-import { AiOutlineLoading3Quarters } from 'react-icons/ai'; // Importa el icono de carga
-import axios from 'axios';
+import React, { useState, useEffect, useRef } from "react";
 import {
-  Container,
-  Typography,
+  Tabs,
+  Tab,
   Box,
+  TextField,
+  Grid,
+  Typography,
+  Divider,
+  IconButton,
+  Avatar,
   Paper,
+  InputAdornment,
   List,
   ListItem,
   ListItemText,
-  Divider,
-  Grid,
-  Tabs,
-  Tab,
-  AppBar,
-  Backdrop,
-  Avatar
-} from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
-import SecurityIcon from '@mui/icons-material/Security';
-import PeopleIcon from '@mui/icons-material/People';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import { Toast } from 'primereact/toast';
-import { useAuth } from '../shared/layaouts/AuthContext';
+  Switch,
+  FormControlLabel,
+  Snackbar,
+  CircularProgress,
+  Alert,
+  Modal,
+} from "@mui/material";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEdit, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import PersonIcon from "@mui/icons-material/Person";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
+import SecurityIcon from "@mui/icons-material/Security";
+import axios from "axios";
+import SettingsIcon from "@mui/icons-material/Settings";
+import { Toast } from "primereact/toast";
+import "../../css/perfilCliente.css";
+import "primereact/resources/themes/saga-blue/theme.css";
+import "primereact/resources/primereact.min.css";
+import { validateName, validatePhone } from "./dialogos/validalaciones";
+import EditableInput from "./dialogos/EditableInput";
+import CambiarContrasenaModal from "./change/cambiarpass"; 
+import MFAComponent from "./Mfa/mfa";
 
-const UserProfile = () => {
-  const [tabIndex, setTabIndex] = useState(0);
-  const { user, updateUser } = useAuth();
-  const [usuario, setUsuario] = useState(user || {});
+const PerfilUsuarioPrime = () => {
+  const [activeTab, setActiveTab] = useState(0);
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  const [isMfaEnabled, setIsMfaEnabled] = useState(false); // Estado de MFA
+  const [profileData, setProfileData] = useState([]);
+  //Constatnte s para actualizar el foto de perfil
+  const [usuariosC, setUsuariosC] = useState([]);
   const toast = useRef(null);
-  const [lastUpdated, setLastUpdated] = useState(usuario.fecha_actualizacionF ? new Date(usuario.fecha_actualizacionF) : null);
-  
-  // Manejo de cambio de tabs
-  const handleTabChange = (event, newValue) => {
-    setTabIndex(newValue);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [csrfToken, setCsrfToken] = useState("")
+  const [openMfaModal, setOpenMfaModal] = useState(false);
+
+const [openModal, setOpenModal] = useState(false);
+
+  // Obtenemos los datos del usuario desde el backend
+
+  const fetchCsrfToken = async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/api/get-csrf-token", { withCredentials: true });
+      setCsrfToken(response.data.csrfToken); // Guardar el token CSRF
+    } catch (error) {
+      console.error("Error al obtener el token CSRF:", error);
+    }
   };
 
+  const fetchProfileData = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:3001/api/usuarios/perfil",
+        {
+          withCredentials: true,
+        }
+      );
+      setUsuariosC(response.data.user);
+      setLastUpdated(new Date(response.data.user.Fecha_ActualizacionF));
+      setLoading(false);
+      console.log("Esto e sloque obtengo de usuarioC", response.data.user);
+    } catch (error) {
+      setLoading(false);
+      console.error("Error al obtener los datos del perfil:", error);
+    }
+  };
+  //LLAMAMOS LA FUNCION
+  useEffect(() => {
+    fetchProfileData();
+    fetchCsrfToken();  
+  }, []);
+
+  // Función para mostrar alertas con PrimeReact
+  const showToast = (severity, summary, detail) => {
+    toast.current.show({
+      severity: severity,
+      summary: summary,
+      detail: detail,
+      life: 4000,
+      sticky: false,
+      className:
+        severity === "success"
+          ? "toast-success"
+          : severity === "error"
+          ? "toast-error"
+          : "toast-info",
+    });
+  };
+
+
+  const handleOpenModal = () => {
+    setOpenModal(true);
+  };
+  
+  // Función para cerrar el modal
+  const handleCloseModal = () => {
+    setOpenModal(false);
+  };
+
+
+   // Función para manejar el cambio de estado del MFA
+   const handleMfaToggle = (e) => {
+    setIsMfaEnabled(e.target.checked);
+    if (e.target.checked) {
+      // Si MFA está activado, abrimos el modal para mostrar el código QR
+      setOpenMfaModal(true);
+    }
+  };
+
+  // Cerrar el modal
+  const handleCloseMfaModal = () => {
+    setOpenMfaModal(false);
+  };
+
+
+
+  //=======================================================================================
+  //Function para actualizar el foto de perfil
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+    const now = new Date();
     if (file) {
+      const lastUpdatedTime = lastUpdated?.getTime();
+      const twoMonths = 60 * 60 * 24 * 1000 * 30 * 2;
+      if (lastUpdated && now - lastUpdatedTime < twoMonths) {
+        showToast(
+          "error",
+          "Acción no permitida",
+          "Solo puedes cambiar tu foto de perfil cada dos meses."
+        );
+        return;
+      }
+      if (!["image/png", "image/jpeg"].includes(file.type)) {
+        showToast(
+          "error",
+          "Formato de imagen inválido",
+          "Solo se aceptan PNG y JPG."
+        );
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        showToast(
+          "error",
+          "Tamaño Excesivo",
+          "El tamaño de la imagen debe ser menor a 2MB."
+        );
+        return;
+      }
       handleImageChange(file);
     }
   };
 
   const handleImageChange = async (file) => {
     const now = new Date();
-    if (lastUpdated && differenceInMonths(now, lastUpdated) < 2) {
-      toast.current.show({
-        severity: 'warn',
-        summary: 'Cambio de Foto de Perfil',
-        detail: 'Solo puedes cambiar tu foto de perfil cada dos meses.',
-        life: 5000,
-      });
-      return;
-    }
 
     const formData = new FormData();
-    formData.append('imagen', file);
+    formData.append("imagen", file); // Imagen a subir
+
     setUploading(true);
+    setIsBlocked(true);
+    showToast(
+      "info",
+      "Subiendo Imagen",
+      "Espera mientras se sube la imagen..."
+    );
 
     try {
-      const response = await axios.post('https://plaza-del-sabor-server.onrender.com/api/imagenes/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      const imageUrl = response.data.url;
+      // Subir la imagen a Cloudinary mediante la API de imágenes
+      const response = await axios.post(
+        "http://localhost:3001/api/imagenes/upload",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "X-CSRF-Token": csrfToken,  
+          },
+          withCredentials: true, // Manejo de cookies
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setUploadProgress(percentCompleted);
+          },
+        }
+      );
 
-      await axios.patch(`https://plaza-del-sabor-server.onrender.com/api/usuarios/perfil/${usuario._id}`, {
-        foto_perfil: imageUrl,
-        fecha_actualizacionF: now.toISOString(),
-      });
+      const imageUrl = response.data.url; // Asegúrate de que la URL de la imagen es correcta
+      console.log("URL de la imagen subida:", imageUrl);
 
-      setUsuario((prevUsuario) => ({
-        ...prevUsuario,
+      // Actualizar el perfil con la nueva URL de la imagen en MySQL
+      await axios.patch(
+        `http://localhost:3001/api/usuarios/perfil/${usuariosC.id}/foto`,
+        {
+          foto_perfil: imageUrl,
+          fecha_actualizacionF: now.toISOString(),
+        },
+        { headers: { "X-CSRF-Token": csrfToken }, 
+        withCredentials: true,}
+      );
+
+      // Actualizar el estado del frontend con la nueva imagen
+      setUsuariosC((prevProfile) => ({
+        ...prevProfile,
         foto_perfil: imageUrl,
-        fecha_actualizacionF: now.toISOString(),
       }));
 
-      toast.current.show({
-        severity: 'success',
-        summary: 'Cambio de Foto de Perfil',
-        detail: 'Foto de perfil actualizado correctamente.',
-        life: 5000,
-      });
+      setLastUpdated(now);
+      fetchProfileData();
+      showToast(
+        "success",
+        "Imagen Subida",
+        "Foto de perfil actualizada correctamente."
+      );
     } catch (error) {
       console.error("Error al actualizar la foto de perfil:", error);
-      toast.current.show({
-        severity: 'error',
-        summary: 'Error en la Actualización',
-        detail: 'Error al actualizar la foto de perfil.',
-        life: 5000,
-      });
+      showToast("error", "Error", "Error al actualizar la foto de perfil.");
     } finally {
       setUploading(false);
+      setIsBlocked(false);
+      setUploadProgress(0);
     }
   };
 
-  const data = {
-    nombre: usuario.nombre || 'no definido',
-    apellidoP: usuario.apellidoP || 'no definido',
-    apellidoM: usuario.apellidoM || 'no definido',
-    username: usuario.username || 'no definido',
-    correo: usuario.correo || 'no definido',
-    telefono: usuario.telefono || 'no definido',
-    fecha_nacimiento: usuario.fecha_nacimiento || 'no definido',
-    genero: usuario.genero || 'no definido',
-    preferencias_comida: usuario.preferencias_comida || 'no definido',
-    ubicacion: {
-      calle: usuario.ubicacion?.calle ?? 'no definido',
-      localidad: usuario.ubicacion?.localidad ?? 'no definido',
-      municipio: usuario.ubicacion?.municipio ?? 'no definido',
-      estado: usuario.ubicacion?.estado ?? 'no definido',
-      pais: usuario.ubicacion?.pais ?? 'México',
-      codigo_postal: usuario.ubicacion?.codigo_postal ?? 'no definido',
-      detalles: usuario.ubicacion?.detalles ?? 'no definido',
-    },
+  //===================GUARDAR EN LA BASE DE DATOS=======================================================================
+  const saveField = async (field, value) => {
+    console.log("VALOR DE FILE, VALUE", field, value);
+    try {
+      // Asegúrate de que el valor se envíe correctamente en el cuerpo de la solicitud
+      const response = await axios.patch(
+        `http://localhost:3001/api/usuarios/perfil/${usuariosC.id}/${field}`,
+        { value }, // Aquí enviamos el valor correctamente formateado
+        {
+          headers: { "X-CSRF-Token": csrfToken },  
+         withCredentials: true, }
+      );
+      fetchProfileData();
+
+      showToast(
+        "success",
+        `${field} actualizado`,
+        `El ${field} ha sido guardado correctamente.`
+      );
+    } catch (error) {
+      showToast(
+        "error",
+        "Error al guardar",
+        `Hubo un error al guardar el ${field}.`
+      );
+      console.error(`Error al guardar el ${field}:`, error);
+    }
   };
+
+  //==========================================================================================
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
+
+//==========================================================================================
+
+  // Renderizamos el contenido solo si ya tenemos los datos cargados
+  if (loading) {
+    return (
+      <Grid container justifyContent="center" sx={{ mt: 4, mb: 4 }}>
+        <CircularProgress size={50} />
+        <Typography variant="h6" sx={{ mt: 2 }}>
+          Cargando datos del perfil...
+        </Typography>
+      </Grid>
+    );
+  }
 
   return (
     <>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <AppBar position="static" color="default">
-          <Tabs
-            value={tabIndex}
-            onChange={handleTabChange}
-            indicatorColor="primary"
-            textColor="primary"
-            variant="scrollable"
-            scrollButtons="auto"
-            aria-label="scrollable auto tabs"
-          >
-            <Tab label="Información Personal" icon={<PersonIcon />} />
-            <Tab label="Ubicación" icon={<LocationOnIcon />} />
-            <Tab label="Preferencias" icon={<PeopleIcon />} />
-            <Tab label="Seguridad" icon={<SecurityIcon />} />
-          </Tabs>
-        </AppBar>
-
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Paper elevation={3} sx={{ p: 3 }}>
-              {tabIndex === 0 && (
-                <>
-                  <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                    <Avatar
-                      src={usuario.foto_perfil || "default_profile_picture.jpg"}
-                      alt="Profile"
-                      sx={{ width: 80, height: 80, mr: 2 }}
-                    />
-                    <Box>
-                      <Typography variant="h6">{data.username}</Typography>
-                      <Typography variant="body1">{data.correo}</Typography>
-                    </Box>
-                    <FontAwesomeIcon
-                      icon={faCamera}
-                      style={{ marginLeft: 'auto', cursor: 'pointer' }}
-                      onClick={() => fileInputRef.current.click()}
-                    />
-                    <input
-                      type="file"
-                      onChange={handleFileChange}
-                      style={{ display: "none" }}
-                      ref={fileInputRef}
-                      accept=".jpg,.png,.jpeg,.webp"
-                    />
-                  </Box>
-
-                  <Divider sx={{ my: 2 }} />
-
-                  <Typography variant="h6" gutterBottom>
-                    Información Personal
-                  </Typography>
-                  <List>
-                    <ListItem>
-                      <ListItemText primary="Nombre" secondary={data.nombre} />
-                      <FontAwesomeIcon icon={faEdit} onClick={() => {}} style={{ cursor: 'pointer' }} />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemText primary="Apellido Paterno" secondary={data.apellidoP} />
-                      <FontAwesomeIcon icon={faEdit} onClick={() => {}} style={{ cursor: 'pointer' }} />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemText primary="Correo Electrónico" secondary={data.correo} />
-                    </ListItem>
-                  </List>
-                </>
-              )}
-            </Paper>
-          </Grid>
-        </Grid>
-
-        <Backdrop open={uploading} style={{ zIndex: 1200 }}>
-          <Box display="flex" flexDirection="column" alignItems="center">
-            <AiOutlineLoading3Quarters className="loading-icon" style={{ fontSize: 50 }} />
-            <Typography variant="h6" color="inherit" sx={{ mt: 2 }}>
-              Subiendo imagen...
+      <Toast ref={toast} position="top-right" />
+      {isBlocked && (
+        <>
+          <div className="blocked-overlay"></div>
+          <div className="overlay">
+            <CircularProgress
+              size={120}
+              thickness={6}
+              sx={{ color: "#1976d2" }}
+            />
+            <Typography variant="h6" color="white" sx={{ mt: 2 }}>
+              Actualizando Imagen.....
             </Typography>
-          </Box>
-        </Backdrop>
+          </div>
+        </>
+      )}
 
-        <Toast ref={toast} />
-      </Container>
+      <Grid container justifyContent="center" sx={{ mt: 4, mb: 4 }}>
+        <Grid item xs={12} md={8}>
+          <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+            {/* Imagen de perfil y nombre */}
+            <Grid
+              container
+              alignItems="center"
+              direction="column"
+              spacing={2}
+              mb={3}
+            >
+              <Grid item>
+                <h1>Bienvenido</h1>
+                <Box sx={{ position: "relative", display: "inline-block" }}>
+                  <Avatar
+                    alt="Foto de Perfil"
+                    src={usuariosC.foto_perfil}
+                    sx={{ width: 150, height: 150 }}
+                  />
+                  <IconButton
+                    sx={{
+                      position: "absolute",
+                      bottom: 0,
+                      right: 0,
+                      backgroundColor: "white",
+                      border: "1px solid #ccc",
+                    }}
+                    onClick={() => fileInputRef.current.click()}
+                  >
+                    <CameraAltIcon />
+                  </IconButton>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    style={{ display: "none" }}
+                    accept="image/*"
+                  />
+                </Box>
+              </Grid>
+              <Grid item>
+                <Typography variant="h5" component="div" gutterBottom>
+                  {usuariosC.nombre} {usuariosC.apellidoP}
+                </Typography>
+                <Typography variant="body1" color="text.secondary" gutterBottom>
+                  {usuariosC.correo}
+                </Typography>
+              </Grid>
+            </Grid>
+
+            <Divider sx={{ mb: 3 }} />
+
+            {/* Tabs para Información, Seguridad, Configuración */}
+            <Box sx={{ width: "100%" }}>
+              <Tabs value={activeTab} onChange={handleTabChange} centered>
+                <Tab icon={<PersonIcon />} label="Datos Personales" />
+                <Tab icon={<SecurityIcon />} label="Seguridad" />
+                {/* <Tab icon={<SettingsIcon />} label="Preferencias" /> */}
+              </Tabs>
+
+              {/* Panel de Información Personal */}
+              {activeTab === 0 && (
+                <Box sx={{ p: 3 }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <>
+                        <EditableInput
+                          label="Nombre"
+                          value={usuariosC?.nombre || ""}
+                          validate={(value) => validateName(value, "nombre")}
+                          onSave={(newNombre) => saveField("nombre", newNombre)}
+                        />
+                      </>
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <EditableInput
+                        label="Apellido Paterno"
+                        value={usuariosC?.apellidoP || ""}
+                        validate={(value) =>
+                          validateName(value, "apellido paterno")
+                        }
+                        onSave={(newApellidoP) =>
+                          saveField("apellidoP", newApellidoP)
+                        }
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <EditableInput
+                        label="Apellido Materno"
+                        value={usuariosC?.apellidoM || ""}
+                        validate={(value) =>
+                          validateName(value, "apellido materno")
+                        }
+                        onSave={(newApellidoM) =>
+                          saveField("apellidoM", newApellidoM)
+                        }
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <EditableInput
+                        label="Teléfono"
+                        value={usuariosC?.telefono || ""}
+                        validate={validatePhone}
+                        onSave={(newPhone) => saveField("telefono", newPhone)}
+                        showHint={true} 
+                        hintMessage="Ingrese su número de teléfono real para recuperación de cuenta."
+                      />
+                    </Grid>
+                  </Grid>
+                </Box>
+              )}
+
+
+              {/* Panel de Seguridad */}
+              {activeTab === 1 && (
+                <Box sx={{ p: 3 }}>
+                  <Typography variant="h6">Seguridad</Typography>
+
+                  <Grid container spacing={2}>
+                  <CambiarContrasenaModal open={openModal} onClose={handleCloseModal} usuario={usuariosC} />
+
+                    {/* Contraseña */}
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        label="Contraseña"
+                        type="password"
+                        value="********"
+                        fullWidth
+                        InputProps={{
+                          readOnly: true,
+                          endAdornment: (
+                            <InputAdornment position="end">
+                               <IconButton onClick={handleOpenModal}>
+                                <FontAwesomeIcon icon={faEdit} />
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                        variant="outlined"
+                      />
+                    </Grid>
+
+                    {/* Autenticación Multifactor (MFA) */}
+                    <Grid item xs={12} md={12}>
+                    <Typography variant="h6">Autenticación Multifactor</Typography>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={isMfaEnabled}
+                          onChange={handleMfaToggle}
+                          color="primary"
+                        />
+                      }
+                      label={
+                        isMfaEnabled
+                          ? "Autenticación multifactor activada"
+                          : "Autenticación multifactor desactivada"
+                      }
+                    />
+                    </Grid>
+
+                    {/* Lista de Sesiones Abiertas */}
+                    {/* <Grid item xs={12} md={12}>
+                      <Typography variant="h6">Sesiones Abiertas</Typography>
+                      <Typography variant="body2">
+                        Revisa dónde tienes la sesión abierta. Puedes cerrar
+                        sesiones innecesarias.
+                      </Typography>
+                      <List>
+                        {Array.isArray(profileData.sessions) &&
+                        profileData.sessions.length > 0 ? (
+                          profileData.sessions.map((session, index) => (
+                            <ListItem key={index}>
+                              <ListItemText
+                                primary={`Dispositivo: ${session.device}`}
+                                secondary={`Ubicación: ${session.location} - Última Actividad: ${session.lastActive}`}
+                              />
+                              <IconButton>
+                                <FontAwesomeIcon icon={faSignOutAlt} />
+                              </IconButton>
+                            </ListItem>
+                          ))
+                        ) : (
+                          <Typography variant="body2">
+                            No hay sesiones abiertas.
+                          </Typography>
+                        )}
+                      </List>
+                    </Grid> */}
+                  </Grid>
+                </Box>
+              )}
+
+              {/* Panel de Configuración */}
+              {activeTab === 2 && (
+                <Box sx={{ p: 3 }}>
+                  {/* Aquí irían los campos de configuración */}
+                </Box>
+              )}
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+      {/* Modal para mostrar MFA */}
+      <Modal open={openMfaModal} onClose={handleCloseMfaModal}>
+        <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2 }}>
+          <MFAComponent userId={usuariosC.id} />
+        </Box>
+      </Modal>
     </>
   );
 };
 
-export default UserProfile;
+export default PerfilUsuarioPrime;

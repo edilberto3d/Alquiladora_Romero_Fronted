@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LayaoutEncabezado from './components/shared/layaouts/encabezados'
+import  ThemeProvider  from './components/shared/layaouts/ThemeContext.jsx'; 
+import { AuthProvider } from "./components/shared/layaouts/AuthContext.jsx";
 
 //==================================PUBLICO=====================================================================
 import Inicio from "./components/public/incio";
@@ -9,7 +11,9 @@ import {ProcesoRegistro } from "./components/shared/autenticacion/procesoRegistr
 
 
 //==================================CLIENTE=====================================================================
-import  InicioCliente  from "./components/client/inicioCliente.jsx";
+import  PerfilCliente from "./components/client/perfilCliente.jsx";
+import { TokenModal } from "./components/client/change/tokenPassword.jsx";
+import ChangePassword from "./components/client/change/password.jsx";
 
 //===========================Rutas Privados=================================
 import  RutaPrivada  from "./components/shared/layaouts/contextoAutentication.jsx";
@@ -18,6 +22,8 @@ import ErrorBoundary from "./components/shared/Errors/registroErrore.jsx";
 function App() {
   return (
     <>
+    <AuthProvider>
+    < ThemeProvider>
     <ErrorBoundary>
      <Routes>
       <Route path="/" element={<LayaoutEncabezado><Inicio /> </LayaoutEncabezado>} />
@@ -27,10 +33,13 @@ function App() {
 
          {/* Rutas para Cliente */}
          <Route path="/cliente" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< Inicio /></LayaoutEncabezado></RutaPrivada>  }/>
-         {/* <Route path="/cliente/perfil" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< UserProfile /></LayaoutEncabezado></RutaPrivada>  }/> */}
-
+         <Route path="/cliente/perfil" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< PerfilCliente/></LayaoutEncabezado></RutaPrivada>  }/>
+         <Route path="/cliente/cambiarPassword" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< TokenModal/></LayaoutEncabezado></RutaPrivada>  }/>
+         <Route path="/cliente/updatePass" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< ChangePassword/></LayaoutEncabezado></RutaPrivada>  }/>
       </Routes> 
       </ErrorBoundary>
+      </ThemeProvider>
+      </AuthProvider>
      
           {/* <Header/> */}
         

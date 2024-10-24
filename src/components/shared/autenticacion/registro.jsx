@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   TextField,
   Box,
@@ -16,6 +16,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate, useParams } from "react-router-dom";
 import CryptoJS from "crypto-js";
+import { ThemeContext } from "../../shared/layaouts/ThemeContext"; 
 
 const Registro = ({ guardarCorreo }) => {
   const [formData, setFormData] = useState({
@@ -36,19 +37,32 @@ const Registro = ({ guardarCorreo }) => {
   const navigate = useNavigate();
   //Contraseña comprometida
   const [isCompromised, setIsCompromised] = useState(null);
+  const { theme } = useContext(ThemeContext);
+  const [csrfToken, setCsrfToken] = useState("");
 
   //Consulta genera de usuarios
   useEffect(() => {
-    axios
-      .get("http://localhost:3001/api/usuarios")
-      .then((response) => {
-        console.log("Usuario cargados", response.data);
+    const fetchUsuariosYCsrf = async () => {
+      try {
+        // Obtener el token CSRF del backend
+        const csrfResponse = await axios.get("http://localhost:3001/api/get-csrf-token", {
+          withCredentials: true,
+        });
+        setCsrfToken(csrfResponse.data.csrfToken); // Guardar el token CSRF
+
+        // Obtener la lista de usuarios
+        const response = await axios.get("http://localhost:3001/api/usuarios");
         setUsuarios(response.data);
-      })
-      .catch((error) => {
-        console.log("Eror a cargar los usuarios", error);
-      });
+      } catch (error) {
+        console.error("Error al cargar los usuarios o el token CSRF", error);
+      }
+    };
+
+    fetchUsuariosYCsrf();
   }, []);
+
+
+
 
   // Función para validar los campos en tiempo real
   const validateField = (name, value) => {
@@ -206,6 +220,12 @@ const Registro = ({ guardarCorreo }) => {
               email: guardarCorreo,
               telefono: formData.telefono,
               contrasena: formData.contrasena,
+            },
+            {
+              headers: {
+                "X-CSRF-Token": csrfToken, // Incluir el token CSRF
+              },
+              withCredentials: true,
             }
           );
           if (response.status == 201) {

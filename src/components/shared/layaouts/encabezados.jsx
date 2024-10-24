@@ -9,7 +9,7 @@ const LayaoutEncabezado=({children})=>{
     let encabezado;
     let pieDePagina;
 
-    if(location.pathname.startsWith('/admin')){
+    if(location.pathname.startsWith('/administrador')){
         encabezado=<Header/>;
         pieDePagina=<PiePagina/>;
     }else if(location.pathname.startsWith('/cliente')){

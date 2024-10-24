@@ -1,10 +1,10 @@
 .search-input {
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    padding: 10px;
-    width: 100%;
-    outline: none;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  padding: 10px;
+  width: 100%;
+  outline: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
 .title-container {
@@ -29,6 +29,25 @@
     .MuiTypography-h6 {
         font-size: 1rem; 
     }
+    form {
+      width: 90%; /* Asegura que el formulario no ocupe todo el ancho */
+      max-width: 350px; /* Limitar el ancho máximo en pantallas pequeñas */
+      margin: auto; /* Centramos el formulario */
+  }
+
+  .recaptcha {
+      width: 100%; /* Asegura que el recaptcha se ajuste al ancho */
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+  }
+
+  /* Ajustes para la barra de navegación */
+  .navbar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+  }
 }
 
 .title-container a {
@@ -80,3 +99,42 @@
 }
 
 
+
+@media (min-width: 600px) {
+    form {
+        max-width: 400px; /* Limitar el tamaño del formulario */
+    }
+
+    .recaptcha {
+        justify-content: flex-start;
+    }
+}
+
+.small-swal {
+  width: 100%;
+  max-width: 300px; 
+  padding: 20px; 
+}
+
+.small-title {
+  font-size: 18px;
+}
+
+.small-content {
+  font-size: 14px; 
+}
+
+/* Estilos responsivos */
+@media (max-width: 600px) {
+  .small-swal {
+    max-width: 250px; 
+  }
+
+  .small-title {
+    font-size: 16px; 
+  }
+
+  .small-content {
+    font-size: 12px; 
+  }
+}

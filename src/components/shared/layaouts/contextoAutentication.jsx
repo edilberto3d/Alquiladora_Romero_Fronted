@@ -4,20 +4,20 @@ import { useAuth } from './AuthContext';
 
 const RutaPrivada = ({ children, rolesPermitidos }) => {
   const { user, isLoading } = useAuth();
+  console.log("Este es lo que se obtine de user rutas privadas", user )
   const location = useLocation();
 
   if (isLoading) {
-    console.log("ContextAutentication cargando");
-    return <div>Loading...</div>;
+    console.log("Verificando autenticación...");
+    return <div>Loading...</div>; // Puedes reemplazarlo con un loader
   }
 
   if (!user) {
+    
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Cambia 'user.rol' por 'user.Rol'
-  const tienePermiso = rolesPermitidos.includes(user.Rol);
-  console.log("ContextAutentication cargando", tienePermiso);
+  const tienePermiso = rolesPermitidos.includes(user.rol); 
 
   return tienePermiso ? children : <Navigate to="/" state={{ from: location }} replace />;
 };

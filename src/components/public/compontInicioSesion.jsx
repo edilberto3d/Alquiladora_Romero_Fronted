@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { FaQuestionCircle } from "react-icons/fa";
-import { IconButton, Box, Avatar } from "@mui/material";
-import { faUser } from "@fortawesome/free-solid-svg-icons";
+
+import {faUser, faSignOutAlt, faCog } from "@fortawesome/free-solid-svg-icons";
 import {
   FaUser,
   FaSignOutAlt,
   FaCommentDots,
   FaUtensils,
 } from "react-icons/fa";
+import { Avatar, Menu, MenuItem, Divider, IconButton, 
+  ClickAwayListener, Typography, Box } from "@mui/material";
 import Swal from "sweetalert2";
 
 import { useNavigate } from "react-router-dom";
@@ -18,8 +20,10 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "../../css/perfil.css";
 //Impotamos localstore
 import { useAuth } from "../shared/layaouts/AuthContext";
+import { ThemeContext } from "../shared/layaouts/ThemeContext";
 
 const LoginLink = () => {
+  const { theme } = useContext(ThemeContext);
   return (
     <Box
       sx={{
@@ -30,7 +34,7 @@ const LoginLink = () => {
       <Link to="/login">
         <IconButton
           sx={{
-            color: "black",
+            color: theme === "light" ? "black" : "white",
             fontSize: { xs: "1.2rem", md: "1.5rem" },
           }}
         >
@@ -43,15 +47,12 @@ const LoginLink = () => {
 
 const InconoPerfil = () => {
   const { user, isLoading, logout } = useAuth();
-  const [username, setUsername] = useState("");
-  const [fotoPerfil, setFotoPerfil] = useState("");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);  // Para controlar el menú
   const navigate = useNavigate();
 
   // Manejar el logout
   const handleLogout = () => {
     logout();
-
     Swal.fire({
       title: "Sesión cerrada",
       text: "Has cerrado sesión correctamente.",
@@ -71,54 +72,66 @@ const InconoPerfil = () => {
   };
 
   // Lógica para manejar el nombre de usuario y foto de perfil
-  useEffect(() => {
-    if (user) {
-      setUsername(user.Nombre?.charAt(0).toUpperCase());
-      setFotoPerfil(user.foto_perfil);
-    }
-  }, [user]);
+  const username = user?.nombre?.charAt(0).toUpperCase();
+  const fotoPerfil = user?.foto_perfil;
+
+  // Abrir el menú
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  // Cerrar el menú
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   // Mostrar mensaje de carga mientras se obtiene el estado de autenticación
   if (isLoading) return <div>Loading...</div>;
 
   return (
-    <div className="profile-container">
-      <div
-        className="profile-icon"
-        onClick={() => setDropdownOpen(!dropdownOpen)}
-      >
-        {fotoPerfil ? (
-          <Avatar src={fotoPerfil} alt={username} className="avatar-img" />
-        ) : (
-          <Avatar className="avatar-letter">{username}</Avatar>
-        )}
-      </div>
+    <ClickAwayListener onClickAway={handleMenuClose}>
+      <Box>
+        <IconButton onClick={handleMenuOpen}>
+          {fotoPerfil ? (
+            <Avatar src={fotoPerfil} alt={username} />
+          ) : (
+            <Avatar>{username}</Avatar>
+          )}
+        </IconButton>
 
-      {dropdownOpen && (
-        <div className="profile-dropdown">
-          <ul className="dropdown-menu show">
-            <li className="dropdown-item">
-              {/* Enlace para Mi Perfil */}
-              <Link to="/perfil" className="dropdown-link">
-                <FaUser className="dropdown-icon" /> Mi Perfil
-              </Link>
-            </li>
-            <li className="dropdown-item">
-              {/* Enlace para Configuración */}
-              <Link to="/configuracion" className="dropdown-link">
-                <FaQuestionCircle className="dropdown-icon" /> Configuración
-              </Link>
-            </li>
-            <li className="dropdown-divider"></li>
-            <li className="dropdown-item cerrar-sesion" onClick={handleLogout}>
-              {/* Enlace para cerrar sesión */}
-              <FaSignOutAlt className="dropdown-icon" /> Cerrar Sesión
-            </li>
-          </ul>
-        </div>
-      )}
-    </div>
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+          PaperProps={{
+            style: {
+              transform: 'translateY(10px)',
+              width: '200px',
+              padding: '10px 0',
+            },
+          }}
+        >
+          <MenuItem onClick={handleMenuClose} component={Link} to="/cliente/perfil">
+            <FontAwesomeIcon icon={faUser} style={{ marginRight: 10 }} />
+            <Typography>Mi Perfil</Typography>
+          </MenuItem>
+
+          <MenuItem onClick={handleMenuClose} component={Link} to="/configuracion">
+            <FontAwesomeIcon icon={faCog} style={{ marginRight: 10 }} />
+            <Typography>Configuración</Typography>
+          </MenuItem>
+
+          <Divider />
+
+          <MenuItem onClick={handleLogout}>
+            <FontAwesomeIcon icon={faSignOutAlt} style={{ marginRight: 10 }} />
+            <Typography>Cerrar Sesión</Typography>
+          </MenuItem>
+        </Menu>
+      </Box>
+    </ClickAwayListener>
   );
 };
+
 
 export { LoginLink, InconoPerfil };

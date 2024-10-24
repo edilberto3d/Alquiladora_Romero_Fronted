@@ -1,16 +1,25 @@
-/* Estilos principales para el contenedor */
 .login-container {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start; /* Cambia align-items a flex-start para que el contenido esté más arriba */
-    height: 100vh;
-    background-color: #f1f1f1;
-    background-image: url('../img/carousel1.jpg');
-    background-size: cover;
-    background-position: center;
-    padding-top: 60px; /* Añadimos un margen superior adicional para ajustar la posición */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: calc(100vh - 100px); /* Asegura que la altura mínima sea el 100% de la pantalla menos el espacio del footer */
+  background-color: #f1f1f1;
+  background-image: url('../img/carousel1.jpg');
+  background-size: cover;
+  background-position: center;
+  padding-top: 10px;
+  padding-bottom: 10px; 
+}
+
+  form {
+    width: 90%; 
+    max-width: 400px; /* Limitar el ancho máximo del formulario */
+    margin: auto; 
+   
   }
   
+
+
   /* Caja del formulario */
   .login-box {
     background-color: #fff;
@@ -20,7 +29,9 @@
     max-width: 350px;
     width: 100%;
     text-align: center;
+    margin-bottom: 40px;
   }
+  
   
   /* Título */
   .login-title {
@@ -123,4 +134,10 @@
     background-color: #0056b3;
     color: white;
   }
-  
+
+  .recaptcha-container {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+}
+

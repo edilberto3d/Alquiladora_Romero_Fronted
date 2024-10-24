@@ -1,0 +1,80 @@
+.perfil-container {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    margin: auto;
+  }
+  
+  .perfil-title {
+    color: #343a40;
+    font-size: 2.5rem;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  .perfil-tabs .nav-link {
+    font-size: 1.2rem;
+    color: #495057;
+    border-radius: 50px;
+    padding: 10px 20px;
+  }
+  
+  .perfil-tabs .nav-link.active {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .tab-pane {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @media (max-width: 768px) {
+    .perfil-container {
+      padding: 10px;
+    }
+  
+    .perfil-title {
+      font-size: 2rem;
+    }
+  
+    .perfil-tabs .nav-link {
+      font-size: 1rem;
+      padding: 8px 15px;
+    }
+  }
+
+
+  
+  
+  .overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    background-color: rgba(0, 0, 0, 0.6);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  
+  .blocked-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 9998;
+    pointer-events: all;
+  }
+  

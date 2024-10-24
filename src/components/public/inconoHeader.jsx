@@ -5,10 +5,13 @@ import Box from '@mui/material/Box';
 
 const InconoHeaderComedor = ({ nombreCompleto }) => {
     return (
-        <Box textAlign="center">
+        
+        <>        <Box textAlign="center">
             <AccountCircleIcon sx={{ fontSize: 40 }} />
             <Typography variant="subtitle1">{nombreCompleto}</Typography>
         </Box>
+        </>
+
     );
 }
 

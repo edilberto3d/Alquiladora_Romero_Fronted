@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../../../css/login.css";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -9,6 +9,7 @@ import { IconButton } from "@mui/material";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import { useAuth } from "../layaouts/AuthContext";
+import { ThemeContext } from "../../shared/layaouts/ThemeContext"; 
 
 const Login = () => {
   const [captchaValid, setCaptchaValid] = useState(false);
@@ -22,65 +23,30 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const { setUser } = useAuth();
+  const { theme } = useContext(ThemeContext);
+  const recaptchaRef = useRef(null);
+    // Estado para almacenar el token CSRF
+    const [csrfToken, setCsrfToken] = useState("");
+    const [mfaRequired, setMfaRequired] = useState(false);
+    const [mfaToken, setMfaToken] = useState(""); // Para el código MFA
 
-  // Configuramos un tiempo de inactividad
-  const INACTIVITY_LIMIT = 60 * 1000;
-  let inactivityTimer;
 
-  // Función para resetear el temporizador
-  const resetInactivityTimer = () => {
-    if (isLoggedIn) {
-      console.log("Reseteando el temporizador...");
-      clearTimeout(inactivityTimer);
-      inactivityTimer = setTimeout(() => {
-        handleInactivityLogout();
-      }, INACTIVITY_LIMIT);
-    }
-  };
-
-  // Función para manejar el cierre de sesión por inactividad
-  const handleInactivityLogout = async () => {
-    console.log("Cerrando sesión por inactividad...");
-    try {
-      // Cerrar sesión en el backend
-      await axios.post(
-        "http://localhost:3001/api/usuarios/Delete/login",
-        {},
-        { withCredentials: true }
-      );
-
-      // Mostrar el mensaje de alerta indicando que la sesión ha caducado
-      Swal.fire({
-        title: "Sesión cerrada",
-        text: "Tus credenciales han caducado debido a la inactividad. Se ha cerrado la sesión.",
-        icon: "warning",
-        confirmButtonText: "OK",
-      }).then(() => {
-        setIsLoggedIn(false);
-        navigate("/login");
-      });
-    } catch (error) {
-      console.error("Error al cerrar sesión por inactividad", error);
-    }
-  };
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      console.log("Comenzando a escuchar eventos de inactividad...");
-      window.addEventListener("mousemove", resetInactivityTimer);
-      window.addEventListener("keypress", resetInactivityTimer);
-
-      resetInactivityTimer();
-
-      return () => {
-        console.log("Limpiando eventos y temporizador...");
-        clearTimeout(inactivityTimer);
-        window.removeEventListener("mousemove", resetInactivityTimer);
-        window.removeEventListener("keypress", resetInactivityTimer);
+    useEffect(() => {
+      const fetchCsrfToken = async () => {
+        try {
+          const response = await axios.get("http://localhost:3001/api/get-csrf-token", {
+            withCredentials: true, // Para asegurarse de que las cookies de CSRF se envíen
+          });
+          setCsrfToken(response.data.csrfToken); // Guardar el token CSRF en el estado
+        } catch (error) {
+          console.error("Error al obtener el token CSRF", error);
+        }
       };
-    }
-  }, [isLoggedIn]);
-
+  
+      fetchCsrfToken();
+    }, []);
+ 
+  //funcion para show password or cult 
   const togglePasswordVisibility = () => {
     setShowPassword((prevShowPassword) => !prevShowPassword);
   };
@@ -89,15 +55,30 @@ const Login = () => {
   const handleCaptchaChange = (value) => {
     setCaptchaToken(value);
     setCaptchaValid(!!value);
+    setErrorMessage(""); 
   };
 
+  const handleCaptchaError = () => {
+    setErrorMessage("Hubo un problema con el CAPTCHA, por favor intenta nuevamente.");
+    setCaptchaValid(false); 
+  };
+
+  const handleCaptchaExpire = () => {
+    setErrorMessage("El CAPTCHA ha expirado, por favor recárgalo e inténtalo de nuevo.");
+    setCaptchaValid(false); // Si expira, invalidamos el CAPTCHA
+    if (recaptchaRef.current) {
+      recaptchaRef.current.reset(); // Reseteamos el CAPTCHA si expira
+    }
+  };
+
+  //================================Enviar datos a back=================================================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
-
+       //Verfiicamos si no esta bloqueado 
     if (isBlocked) {
       setErrorMessage(
-        "Este dispositivo está bloqueado. Por favor, espera 10 minutos para intentarlo de nuevo."
+        "Esta cuenta esta bloqueado Por  favor, espera 10 minutos para intentarlo de nuevo."
       );
       return;
     }
@@ -114,52 +95,85 @@ const Login = () => {
 
     try {
       setIsLoading(true);
+
+      // Si MFA ya fue solicitado, enviamos el código MFA también
+    
+      const loginData = {
+        email: correo,
+        contrasena: contrasena,
+      };
+      
+      // Si MFA es requerido, agregamos el token MFA al objeto loginData
+      if (mfaRequired) {
+        loginData.tokenMFA = mfaToken; // El backend espera recibir tokenMFA
+      }
+
+
       // Hacemos una solicitud POST
       const response = await axios.post(
         "http://localhost:3001/api/usuarios/login",
         {
           email: correo,
-          contrasena: contrasena,
+        contrasena: contrasena,
+     okenMFA : mfaToken,
+          
         },
-        { withCredentials: true }
+        {
+          headers: {
+            "X-CSRF-Token": csrfToken, 
+          },
+          withCredentials: true, // Para enviar las cookies de sesión junto con la solicitud
+        }
       );
-      console.log("Este es el resoltado de login ", response.data);
+      
+      
+      console.log("Este es el resultado del login:", response.data);
+    
+      const user = response.data?.user;
 
-      const { user } = response.data;
-      setUser(user);
-      console.log("Este es el resoltado de login de rol", { user });
-
-      setIsLoggedIn(true);
-
-      // Redireccionamos según el rol del usuario
-      if (user.Rol === "Administrador") {
-        navigate("/admin");
-      } else if (user.Rol === "Cliente") {
-        Swal.fire({
-          title: "¡Inicio de sesión correcto!",
-          text: "Bienvenido.",
-          icon: "success",
-          timer: 2000,
-          showConfirmButton: false,
-          customClass: {
-            popup: "small-swal",
-          },
-          willClose: () => {
-            console.log("La alerta se ha cerrado automáticamente");
-            console.log("Dirigiendo a cliente");
-            navigate("/cliente");
-          },
-        });
-      } else {
-        setErrorMessage("Rol no reconocido.");
+      if (response.data.mfaRequired) {
+        // Si se requiere MFA, pedimos el código al usuario
+        setMfaRequired(true); // Activar el estado para mostrar el input de MFA
+        setErrorMessage("Se requiere autenticación multifactor (MFA). Ingresa el código MFA de tu aplicación.");
+        return;
       }
+    
+      if (user) {
+        console.log("Usuario obtenido:", user);
+        setUser({ id: user.idUsuarios, nombre: user.nombre, rol: user.rol });
+        setIsLoggedIn(true);
+        
+        // Redirigir según el rol del usuario
+        if (user.rol === "Administrador") {
+          navigate("/admin");
+        } else if (user.rol === "Cliente") {
+          Swal.fire({
+            title: "¡Inicio de sesión correcto!",
+            text: "Bienvenido.",
+            icon: "success",
+            timer: 2000,
+            showConfirmButton: false,
+            customClass: {
+              popup: "small-swal",
+            },
+            willClose: () => {
+              console.log("Dirigiendo a cliente");
+              navigate("/cliente");
+            },
+          });
+        } else {
+          setErrorMessage("Rol no reconocido.");
+        }
+      } else {
+        setErrorMessage("No se pudo obtener el usuario.");
+      }
+    
     } catch (error) {
+      console.error("Error durante el login:", error);
       if (error.response) {
         if (error.response.status === 403) {
           setIsBlocked(true);
-          setErrorMessage(
-            "Dispositivo bloqueado. Por favor, espera 10 minutos."
-          );
+          setErrorMessage("Dispositivo bloqueado. Por favor, espera 10 minutos.");
         } else if (error.response.status === 401) {
           setErrorMessage("Correo o contraseña incorrectos.");
         } else {
@@ -168,14 +182,52 @@ const Login = () => {
       } else {
         setErrorMessage("Error de conexión. Inténtalo de nuevo más tarde.");
       }
+    
+      // Restablecemos el captcha
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
+    
     } finally {
       setIsLoading(false);
     }
   };
+    
 
   return (
-    <div className="login-container">
-      <div className={`login-box ${isBlocked || isLoading ? "disabled" : ""}`}>
+    <div
+      className="login-container"
+      style={{
+        backgroundColor: theme === "light" ? "#f5f5f5" : "#333",
+        color: theme === "light" ? "#000" : "#fff",
+        paddingBottom: "80px",
+      }}
+    >
+
+{mfaRequired && (
+  <div className="form-group">
+    <label htmlFor="mfaToken">Código MFA</label>
+    <input
+      type="text"
+      id="mfaToken"
+      placeholder="Ingresa el código MFA"
+      value={mfaToken}
+      onChange={(e) => setMfaToken(e.target.value)}
+      required
+    />
+  </div>
+)}
+
+
+     <div
+        className={`login-box ${isBlocked || isLoading ? "disabled" : ""}`}
+        style={{
+          backgroundColor: theme === "light" ? "#fff" : "#444",
+          color: theme === "light" ? "#000" : "#fff",
+          border: theme === "light" ? "1px solid #ddd" : "1px solid #666",
+          marginBottom: "20px",
+        }}
+      >
         <h2 className="login-title">Bienvenido</h2>
 
         {errorMessage && (
@@ -210,11 +262,22 @@ const Login = () => {
               onChange={(e) => setCorreo(e.target.value)}
               required
               className={isBlocked || isLoading ? "disabled-input" : ""}
-            />
+            
+            style={{
+                backgroundColor: theme === "light" ? "#fff" : "#555",
+                color: theme === "light" ? "#000" : "#fff",
+                border: theme === "light" ? "1px solid #ccc" : "1px solid #777",
+              }}
+              />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Contraseña</label>
+            <label
+              htmlFor="password"
+              style={{ color: theme === "light" ? "#000" : "#fff" }}
+            >
+              Contraseña
+            </label>
             <div style={{ position: "relative" }}>
               <input
                 type={showPassword ? "text" : "password"}
@@ -225,6 +288,12 @@ const Login = () => {
                 onChange={(e) => setContrasena(e.target.value)}
                 required
                 className={isBlocked || isLoading ? "disabled-input" : ""}
+                style={{
+                  backgroundColor: theme === "light" ? "#fff" : "#555",
+                  color: theme === "light" ? "#000" : "#fff",
+                  border:
+                    theme === "light" ? "1px solid #ccc" : "1px solid #777",
+                }}
               />
               <IconButton
                 aria-label="toggle password visibility"
@@ -235,18 +304,27 @@ const Login = () => {
                   right: "10px",
                   top: "50%",
                   transform: "translateY(-50%)",
+                  color: theme === "light" ? "#000" : "#fff",
                 }}
               >
-                <FontAwesomeIcon icon={showPassword ? faEye : faEyeSlash} />
+                <FontAwesomeIcon
+                  icon={showPassword ? faEye : faEyeSlash}
+                  style={{ color: theme === "light" ? "#000" : "#fff" }}
+                />
               </IconButton>
             </div>
           </div>
 
+
           <ReCAPTCHA
+           ref={recaptchaRef}
             className="recaptcha-container"
             sitekey="6Le0dGAqAAAAAPQMdd-d6ZH8nZWTgC9HEHpO6R-7"
             onChange={handleCaptchaChange}
+            onErrored={handleCaptchaError} 
+            onExpired={handleCaptchaExpire} 
             disabled={isBlocked || isLoading}
+            style={{ marginBottom: "20px", transform: "scale(0.9)" }} 
           />
 
           <button
@@ -270,6 +348,7 @@ const Login = () => {
               "Iniciar Sesión"
             )}
           </button>
+          
         </form>
 
         <div className="login-links">
