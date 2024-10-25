@@ -4,7 +4,7 @@ import "../../../css/login.css";
 import ReCAPTCHA from "react-google-recaptcha";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Alert, Box, CircularProgress } from "@mui/material";
+import { Alert, Box, CircularProgress, TextField, Button }  from "@mui/material";
 import { IconButton } from "@mui/material";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
@@ -23,12 +23,14 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const { setUser } = useAuth();
+  const [usuraioC,setUsuarioC]=useState([]);
   const { theme } = useContext(ThemeContext);
   const recaptchaRef = useRef(null);
     // Estado para almacenar el token CSRF
     const [csrfToken, setCsrfToken] = useState("");
     const [mfaRequired, setMfaRequired] = useState(false);
     const [mfaToken, setMfaToken] = useState(""); // Para el código MFA
+    const [userId, setUserId] = useState(""); // 
 
 
     useEffect(() => {
@@ -95,27 +97,13 @@ const Login = () => {
 
     try {
       setIsLoading(true);
-
-      // Si MFA ya fue solicitado, enviamos el código MFA también
-    
-      const loginData = {
-        email: correo,
-        contrasena: contrasena,
-      };
-      
-      // Si MFA es requerido, agregamos el token MFA al objeto loginData
-      if (mfaRequired) {
-        loginData.tokenMFA = mfaToken; // El backend espera recibir tokenMFA
-      }
-
-
       // Hacemos una solicitud POST
       const response = await axios.post(
         "http://localhost:3001/api/usuarios/login",
         {
           email: correo,
         contrasena: contrasena,
-     okenMFA : mfaToken,
+        okenMFA : mfaToken,
           
         },
         {
@@ -130,14 +118,13 @@ const Login = () => {
       console.log("Este es el resultado del login:", response.data);
     
       const user = response.data?.user;
-
+      setUserId(response.data.userId);
+      setUsuarioC(user);
       if (response.data.mfaRequired) {
-        // Si se requiere MFA, pedimos el código al usuario
-        setMfaRequired(true); // Activar el estado para mostrar el input de MFA
-        setErrorMessage("Se requiere autenticación multifactor (MFA). Ingresa el código MFA de tu aplicación.");
+        // Si el backend indica que MFA es requerido, mostramos el campo MFA
+        setMfaRequired(true);
         return;
       }
-    
       if (user) {
         console.log("Usuario obtenido:", user);
         setUser({ id: user.idUsuarios, nombre: user.nombre, rol: user.rol });
@@ -192,6 +179,76 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  //=================================================================================================
+ // Función para enviar el código MFA
+ const handleMfaSubmit = async (e) => {
+  e.preventDefault();
+  setErrorMessage(""); // Limpiamos el mensaje de error
+  
+  try {
+    setIsLoading(true);
+
+    // Realizamos la solicitud al backend para verificar el código MFA
+    const response = await axios.post(
+      "http://localhost:3001/api/usuarios/login",
+      {
+        email: correo,
+        contrasena: contrasena,
+        tokenMFA: mfaToken 
+      },
+      {
+        headers: {
+          "X-CSRF-Token": csrfToken, // Añadimos el token CSRF para seguridad
+        },
+        withCredentials: true, // Para enviar las cookies
+      }
+    );
+
+    // Si la verificación del MFA fue exitosa, recibimos el usuario en la respuesta
+    const user = response.data?.user;
+
+    if (user) {
+      // Guardamos el usuario en el contexto o en el estado global
+      setUser({ id: user.idUsuarios, nombre: user.nombre, rol: user.rol });
+      setIsLoggedIn(true); // Actualizamos el estado para indicar que el usuario ha iniciado sesión
+
+      // Redirigimos según el rol del usuario
+      if (user.rol === "Administrador") {
+        Swal.fire({
+          title: "¡Código MFA correcto!",
+          text: "Bienvenido.",
+          icon: "success",
+          timer: 2000,
+          showConfirmButton: false,
+          willClose: () => navigate("/Administrador"),
+        });
+        
+      } else if (user.rol === "Cliente") {
+        // Mostramos un mensaje de éxito y redirigimos al área del cliente
+        Swal.fire({
+          title: "¡Código MFA correcto!",
+          text: "Bienvenido.",
+          icon: "success",
+          timer: 2000,
+          showConfirmButton: false,
+          willClose: () => navigate("/cliente"),
+        });
+      }
+    } else {
+      // Si no se recibe un usuario, mostramos un mensaje de error
+      setErrorMessage("Código MFA incorrecto o vencido.");
+    }
+
+  } catch (error) {
+    console.error("Error durante la verificación MFA:", error);
+    // Si ocurre un error en la solicitud, mostramos un mensaje de error
+    setErrorMessage("Error de verificación MFA. Inténtalo nuevamente.");
+  } finally {
+    setIsLoading(false); // Detenemos el indicador de carga
+  }
+};
+
     
 
   return (
@@ -203,20 +260,44 @@ const Login = () => {
         paddingBottom: "80px",
       }}
     >
-
-{mfaRequired && (
-  <div className="form-group">
-    <label htmlFor="mfaToken">Código MFA</label>
-    <input
-      type="text"
-      id="mfaToken"
-      placeholder="Ingresa el código MFA"
-      value={mfaToken}
-      onChange={(e) => setMfaToken(e.target.value)}
-      required
-    />
-  </div>
-)}
+        {errorMessage && (
+        <Box sx={{ marginBottom: 2, textAlign: "center" }}>
+          <Alert severity="error">{errorMessage}</Alert>
+        </Box>
+      )}
+      
+      {mfaRequired ? (
+        <div className="login-box">
+          <h2 className="login-title">Autenticación MFA</h2>
+          <form onSubmit={handleMfaSubmit}>
+            <TextField
+              label="Código MFA"
+              variant="outlined"
+              value={mfaToken}
+              onChange={(e) => setMfaToken(e.target.value)}
+              fullWidth
+              required
+              sx={{ marginBottom: 2 }}
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              fullWidth
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  Verificando...{" "}
+                  <CircularProgress size={20} sx={{ color: "white", marginLeft: "10px" }} />
+                </>
+              ) : (
+                "Verificar Código"
+              )}
+            </Button>
+          </form>
+        </div>
+      ) : (
 
 
      <div
@@ -355,10 +436,12 @@ const Login = () => {
           <Link to="/RegistroValidacionCorreo">
             ¿No tienes cuenta? Regístrate
           </Link>
-          <Link to="/forgpassw">¿Olvidaste tu contraseña?</Link>
+          <Link to="/recuperarPass">¿Olvidaste tu contraseña?</Link>
         </div>
       </div>
+      )}
     </div>
+          
   );
 };
 

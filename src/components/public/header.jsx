@@ -86,7 +86,7 @@ const Header = () => {
         } else if (userType === "Comedor") {
           navigate("/comedor");
         } else if (userType === "Administrador") {
-          navigate("/admin");
+          navigate("/Admnistrador");
         } else {
           navigate("/");
         }
@@ -96,8 +96,8 @@ const Header = () => {
           navigate("/cliente");
         } else if (userType === "Comedor" && !location.pathname.startsWith("/comedor")) {
           navigate("/comedor");
-        } else if (userType === "Administrador" && !location.pathname.startsWith("/admin")) {
-          navigate("/admin");
+        } else if (userType === "Administrador" && !location.pathname.startsWith("/Administrador")) {
+          navigate("/Administrador");
         }
       }
     }
@@ -291,7 +291,13 @@ const Header = () => {
         </Box>
       </Box>
 
-      {/* Barra de navegación principal */}
+     
+
+          {/* Menú de navegación */}
+          
+            <>
+
+             {/* Barra de navegación principal */}
       <AppBar
         position="static"
         sx={{ bgcolor: theme === "light" ? "grey.200" : "black.1000" }}
@@ -320,7 +326,7 @@ const Header = () => {
             </Typography>
           </div>
 
-          {/* Menú de navegación */}
+         
           <Box
             sx={{
               display: { xs: "none", md: "flex" },
@@ -416,7 +422,9 @@ const Header = () => {
             >
               <FontAwesomeIcon icon={faBars} />
             </IconButton>
+          
           </Box>
+         
         </Toolbar>
       </AppBar>
 
@@ -483,6 +491,15 @@ const Header = () => {
           <Divider sx={{ my: 1 }} />
         </Box>
       </Drawer>
+            
+            
+
+
+            
+            </>
+        
+        
+         
     </Box>
   );
 };

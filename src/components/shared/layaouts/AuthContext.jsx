@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
   const fetchCsrfToken = async () => {
     try {
       const response = await axios.get('http://localhost:3001/api/get-csrf-token', { withCredentials: true });
-      setCsrfToken(response.data.csrfToken); // Guardar el token CSRF
+      setCsrfToken(response.data.csrfToken); 
     } catch (error) {
       console.error('Error obteniendo el token CSRF:', error);
     }
@@ -35,10 +35,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Función para cerrar sesión
+
   const logout = async () => {
     try {
-      // Asegurarse de obtener el CSRF token antes de hacer la solicitud
+    
       if (!csrfToken) {
         await fetchCsrfToken();
       }

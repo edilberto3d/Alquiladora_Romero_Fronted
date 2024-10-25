@@ -17,7 +17,7 @@ const RutaPrivada = ({ children, rolesPermitidos }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  const tienePermiso = rolesPermitidos.includes(user.rol); 
+  const tienePermiso = rolesPermitidos.includes(user?.rol);
 
   return tienePermiso ? children : <Navigate to="/" state={{ from: location }} replace />;
 };

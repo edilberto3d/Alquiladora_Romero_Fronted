@@ -20,6 +20,8 @@ import {
   CircularProgress,
   Alert,
   Modal,
+  Button,
+  useTheme,
 } from "@mui/material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
@@ -53,6 +55,9 @@ const PerfilUsuarioPrime = () => {
   const [loading, setLoading] = useState(true);
   const [csrfToken, setCsrfToken] = useState("")
   const [openMfaModal, setOpenMfaModal] = useState(false);
+  const theme = useTheme();
+  const [activo, setActivo]= useState(false);
+
 
 const [openModal, setOpenModal] = useState(false);
 
@@ -127,10 +132,6 @@ const [openModal, setOpenModal] = useState(false);
     }
   };
 
-  // Cerrar el modal
-  const handleCloseMfaModal = () => {
-    setOpenMfaModal(false);
-  };
 
 
 
@@ -274,6 +275,16 @@ const [openModal, setOpenModal] = useState(false);
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
+
+  const handleOpenMfaModal = () => {
+    setOpenMfaModal(true);
+  };
+
+  // Función para cerrar el modal
+  const handleCloseMfaModal = () => {
+    setOpenMfaModal(false);
+  };
+
 
 //==========================================================================================
 
@@ -452,26 +463,79 @@ const [openModal, setOpenModal] = useState(false);
                     </Grid>
 
                     {/* Autenticación Multifactor (MFA) */}
-                    <Grid item xs={12} md={12}>
-                    <Typography variant="h6">Autenticación Multifactor</Typography>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={isMfaEnabled}
-                          onChange={handleMfaToggle}
+                    <Grid item xs={12} md={7}>
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        backgroundColor: '#f5f5f5',
+                        boxShadow: 1,
+                        textAlign: 'left',  
+                        mb: 2,
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ mb: 1 }}>
+                        Autenticación Multifactor
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 2 }}>
+                        Requiere un desafío de seguridad adicional al iniciar sesión. Si no puedes pasar este desafío, tendrás la opción de recuperar tu cuenta por correo electrónico.
+                      </Typography>
+
+                      {/* Botón para activar el modal MFA */}
+                      <Button
+  variant="contained"
+  color={activo ? 'secondary' : 'primary'}
+  onClick={handleOpenMfaModal}
+  sx={{ width: 'auto', minWidth: '200px' }}  // Reducir el tamaño del botón
+>
+  {activo ? 'Desactivar MFA' : 'Activar MFA'}
+</Button>
+
+                      
+                    </Box>
+
+
+                    {/* Modal para configuración de MFA */}
+                    <Modal
+                      open={openMfaModal}
+                      onClose={handleCloseMfaModal}
+                      aria-labelledby="modal-mfa-title"
+                      aria-describedby="modal-mfa-description"
+                    >
+                      <Box
+                        sx={{
+                          bgcolor: 'background.paper',
+                          p: 4,
+                          borderRadius: 2,
+                          boxShadow: 24,
+                          maxWidth: 500,
+                          mx: 'auto',
+                          mt: '10%',
+                          textAlign: 'center',  // Centrar contenido
+                        }}
+                      >
+                        <Typography id="modal-mfa-title" variant="h6" gutterBottom>
+                          Configuración de Autenticación Multifactor
+                        </Typography>
+                        <MFAComponent userId={usuariosC.id}  setActivo={setActivo}/> 
+
+                        <Button
+                          onClick={handleCloseMfaModal}
+                          variant="contained"
                           color="primary"
-                        />
-                      }
-                      label={
-                        isMfaEnabled
-                          ? "Autenticación multifactor activada"
-                          : "Autenticación multifactor desactivada"
-                      }
-                    />
-                    </Grid>
+                          sx={{ mt: 2 }}
+                          fullWidth
+                        >
+                          Cerrar
+                        </Button>
+
+                      </Box>
+                    </Modal>
+                  </Grid>
+
 
                     {/* Lista de Sesiones Abiertas */}
-                    {/* <Grid item xs={12} md={12}>
+                     <Grid item xs={12} md={8}>
                       <Typography variant="h6">Sesiones Abiertas</Typography>
                       <Typography variant="body2">
                         Revisa dónde tienes la sesión abierta. Puedes cerrar
@@ -497,7 +561,7 @@ const [openModal, setOpenModal] = useState(false);
                           </Typography>
                         )}
                       </List>
-                    </Grid> */}
+                    </Grid> 
                   </Grid>
                 </Box>
               )}
@@ -512,12 +576,8 @@ const [openModal, setOpenModal] = useState(false);
           </Paper>
         </Grid>
       </Grid>
-      {/* Modal para mostrar MFA */}
-      <Modal open={openMfaModal} onClose={handleCloseMfaModal}>
-        <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2 }}>
-          <MFAComponent userId={usuariosC.id} />
-        </Box>
-      </Modal>
+    
+     
     </>
   );
 };
