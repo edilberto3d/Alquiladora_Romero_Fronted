@@ -12,7 +12,7 @@ import {
 import { Toast } from 'primereact/toast';
 import axios from 'axios';
 
-const MFAComponent = ({ userId, setActivo}) => {
+const MFAComponent = ({ userId, }) => {
   const [isMfaEnabled, setIsMfaEnabled] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
@@ -54,7 +54,7 @@ const MFAComponent = ({ userId, setActivo}) => {
     }
   }, [csrfToken, userId]);
 
-  // Función para habilitar MFA y obtener el código QR
+ 
   const handleEnableMFA = async () => {
     setLoading(true);
     try {
@@ -69,8 +69,8 @@ const MFAComponent = ({ userId, setActivo}) => {
         }
       );
       setQrCodeUrl(response.data.qrCode);
-      setOpenModal(true); // Solo abrimos el modal después de generar el QR
-      setActivo(true);
+      setOpenModal(true); 
+     
       toast.current.show({ severity: 'info', summary: 'QR Generado', detail: 'Escanea el código QR con tu app de autenticación.', life: 5000 });
     } catch (error) {
       console.error('Error al habilitar MFA:', error);
@@ -86,12 +86,12 @@ const MFAComponent = ({ userId, setActivo}) => {
       const response = await axios.post(
         'http://localhost:3001/api/mfa/verify-mfa',
         {
-          userId: userId,        // Enviar el ID de usuario
-          token: verificationCode // Enviar el código MFA que el usuario ha ingresado
+          userId: userId,        
+          token: verificationCode 
         },
         {
           headers: {
-            'X-CSRF-Token': csrfToken, // Incluir el token CSRF en la solicitud
+            'X-CSRF-Token': csrfToken,
           },
           withCredentials: true,
         }
@@ -100,7 +100,7 @@ const MFAComponent = ({ userId, setActivo}) => {
       // Si el código es válido, activa MFA
       if (response.data.message === 'Código MFA verificado correctamente.') {
         setIsMfaEnabled(true);
-        setActivo(true); 
+        
         toast.current.show({ severity: 'success', summary: 'Activado', detail: 'MFA activado correctamente.', life: 5000 });
         handleCloseModal(); // Cerrar el modal
       } else {
@@ -142,7 +142,7 @@ const MFAComponent = ({ userId, setActivo}) => {
           }
         );
         setIsMfaEnabled(false); // Deshabilitar MFA
-        setActivo(false);
+       
         toast.current.show({ severity: 'info', summary: 'Desactivado', detail: 'MFA desactivado correctamente.', life: 5000 });
         handleCloseModal(); // Cerrar el modal
       } else {
@@ -157,9 +157,9 @@ const MFAComponent = ({ userId, setActivo}) => {
   // Función para cerrar el modal sin cambiar el estado de MFA si no se verifica
   const handleCloseModal = () => {
     setOpenModal(false);
-    setVerificationCode('');  // Limpiar el campo de código
-    setVerificationError(''); // Limpiar cualquier error de verificación
-    setQrCodeUrl('');         // Limpiar el QR generado
+    setVerificationCode('');  
+    setVerificationError(''); 
+    setQrCodeUrl('');        
   };
 
   return (
@@ -181,8 +181,8 @@ const MFAComponent = ({ userId, setActivo}) => {
       {/* Modal para mostrar el código QR y verificar MFA */}
       <Modal
         open={openModal}
-        onClose={handleCloseModal} // Usar handleCloseModal para cerrar y limpiar el estado
-        disableBackdropClick={true} // Evitar cerrar al hacer clic fuera del modal
+        onClose={handleCloseModal} 
+        disableBackdropClick={true} 
       >
         <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, maxWidth: '500px', mx: 'auto', my: '10%', textAlign: 'center' }}>
           <Typography variant="h6" gutterBottom>Protege tu cuenta</Typography>

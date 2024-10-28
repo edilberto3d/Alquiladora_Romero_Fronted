@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef,useContext  } from 'react';
 import {
   Box,
   Grid,
@@ -12,6 +12,9 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  List,
+  ListItem,
+  ListItemText,
 } from '@mui/material';
 import { Edit as EditIcon, CameraAlt as CameraAltIcon, Add as AddIcon } from '@mui/icons-material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -19,6 +22,7 @@ import { faFacebook, faInstagram, faTwitter } from '@fortawesome/free-brands-svg
 import { faGlobe } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import { Toast } from 'primereact/toast';
+import { ThemeContext } from '../../shared/layaouts/ThemeContext';
 
 // Expresiones regulares para validación
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -26,14 +30,18 @@ const phoneRegex = /^\d{10}$/;
 const urlRegex = /^(https?:\/\/)/;
 
 const CrudEmpresa = () => {
+  const { theme } = useContext(ThemeContext);
+  const isDarkMode = theme === 'dark';
   const [empresaData, setEmpresaData] = useState({
     logo: '',
     direccion: '',
     correo: '',
     telefono: '',
+    slogan: '',
     redes_sociales: {}, // Redes sociales como objeto dinámico
   });
-
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [openModal, setOpenModal] = useState(false);
   const [currentField, setCurrentField] = useState('');
   const [newValue, setNewValue] = useState('');
@@ -76,6 +84,7 @@ const CrudEmpresa = () => {
         direccion: response.data.direccion || '',
         correo: response.data.correo || '',
         telefono: response.data.telefono || '',
+        slogan: response.data.slogan || '',
         redes_sociales: JSON.parse(response.data.redes_sociales || '{}'),
       });
     } catch (error) {
@@ -87,7 +96,82 @@ const CrudEmpresa = () => {
     fetchEmpresaData();
   }, [csrfToken]);
 
-  // Abrir modal para editar un campo
+  // Validación de formato de imagen
+  const validateFile = (file) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowedTypes.includes(file.type)) {
+      showToast("error", "Formato inválido", "Solo se permiten imágenes JPG, PNG o JPEG");
+      return false;
+    }
+    return true;
+  };
+
+  // Mostrar mensajes Toast
+  const showToast = (severity, summary, detail) => {
+    toast.current.show({ severity, summary, detail, life: 3000 });
+  };
+
+  const handleUploadImage = async (e) => {
+    const file = e.target.files[0];
+
+    // Verificar si se ha seleccionado un archivo y si es del formato permitido
+    if (!file || !validateFile(file)) return;
+
+    const formData = new FormData();
+    formData.append("imagen", file); // Imagen a subir
+
+    setUploading(true); // Estado de subida
+    setUploadProgress(0); // Progreso inicial
+    showToast("info", "Subiendo Imagen", "Espera mientras se sube la imagen...");
+
+    try {
+      // Subir la imagen
+      const response = await axios.post(
+        "http://localhost:3001/api/imagenes/upload",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "X-CSRF-Token": csrfToken,
+          },
+          withCredentials: true, // Para enviar las cookies
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setUploadProgress(percentCompleted); // Actualiza el progreso
+          },
+        }
+      );
+
+      const imageUrl = response.data.url; // La URL de la imagen subida
+      console.log("URL de la imagen subida:", imageUrl);
+
+      // Actualizar el logo de la empresa con la URL obtenida
+      const updatedData = { ...empresaData, logo_url: imageUrl };
+      console.log("Este es updateData", updatedData)
+
+      await axios.post(`http://localhost:3001/api/empresa/actualizar`, updatedData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        },
+        withCredentials: true,
+      });
+
+      setEmpresaData(updatedData); 
+      showToast("success", "Imagen Subida", "El logo se ha subido correctamente.");
+      setUploading(false); 
+      setOpenModal(false);
+      fetchEmpresaData();
+
+    } catch (error) {
+      showToast("error", "Error al subir", "No se pudo subir la imagen, intenta de nuevo.");
+      setUploading(false); 
+      console.error("Error al subir la imagen:", error);
+    }
+  };
+
   const handleOpenModal = (field, socialKey = '') => {
     setCurrentField(field);
     setNewValue(socialKey ? empresaData.redes_sociales[socialKey] : empresaData[field]);
@@ -97,12 +181,10 @@ const CrudEmpresa = () => {
     setOpenModal(true);
   };
 
-  // Cerrar modal
   const handleCloseModal = () => {
     setOpenModal(false);
   };
 
-  // Validación de campos
   const validateField = () => {
     if (['correo'].includes(currentField) && !emailRegex.test(newValue)) {
       setErrorMessage('Por favor, ingresa un correo electrónico válido.');
@@ -110,24 +192,31 @@ const CrudEmpresa = () => {
     } else if (['telefono'].includes(currentField) && !phoneRegex.test(newValue)) {
       setErrorMessage('El teléfono debe contener exactamente 10 dígitos numéricos.');
       return false;
-    } else if (['facebook', 'instagram', 'twitter', 'redes_sociales'].includes(currentField) && !urlRegex.test(newValue)) {
+    } else if (['redes_sociales'].includes(currentField) && !urlRegex.test(newValue)) {
       setErrorMessage('Por favor, ingresa una URL válida que comience con http o https.');
       return false;
     } else if (['direccion'].includes(currentField) && (newValue.trim().length < 5 || newValue.trim().length > 40)) {
       setErrorMessage('La dirección debe tener entre 5 y 40 caracteres.');
       return false;
+    }else if (['slogan'].includes(currentField) && (newValue.trim().length < 4 || newValue.trim().length > 30)) {
+      setErrorMessage('El slogan debe tener entre 4 y 30 caracteres.');
+      return false;
     }
+
     setErrorMessage('');
     return true;
   };
 
-  // Guardar los cambios
   const handleSave = async () => {
     if (!validateField()) return;
 
     const updatedData = { ...empresaData };
     
     if (currentField === 'redes_sociales') {
+      if (newValue.trim() === '') {
+        setErrorMessage('Por favor, introduce una URL válida antes de guardar.');
+        return;
+      }
       updatedData.redes_sociales[currentSocialKey] = newValue;
     } else {
       updatedData[currentField] = newValue;
@@ -144,26 +233,22 @@ const CrudEmpresa = () => {
 
       setEmpresaData(updatedData);
       handleCloseModal();
-      toast.current.show({ severity: 'success', summary: 'Actualización exitosa', detail: `El campo ${currentField} se actualizó correctamente`, life: 3000 });
+      showToast('success', 'Actualización exitosa', `El campo ${currentField} se actualizó correctamente.`);
     } catch (error) {
-      toast.current.show({ severity: 'error', summary: 'Error', detail: `El campo ${currentField} no se actualizó`, life: 3000 });
+      showToast('error', 'Error', `El campo ${currentField} no se actualizó.`);
       console.error(`Error al actualizar el campo ${currentField}`, error);
     }
   };
 
-  // Añadir una nueva red social
   const addNewSocial = () => {
     const newSocialKey = `new_social_${Object.keys(empresaData.redes_sociales).length + 1}`;
-    const updatedRedesSociales = {
-      ...empresaData.redes_sociales,
-      [newSocialKey]: '',
-    };
-    setEmpresaData(prevData => ({ ...prevData, redes_sociales: updatedRedesSociales }));
     handleOpenModal('redes_sociales', newSocialKey);
   };
 
-  // Obtener el ícono de la red social basado en la URL
-  const getSocialIcon = (url) => {
+  const getSocialIcon = (url = '') => {
+    if (!url || typeof url !== 'string') {
+      return faGlobe;
+    }
     if (url.includes('facebook.com')) return faFacebook;
     if (url.includes('instagram.com')) return faInstagram;
     if (url.includes('twitter.com')) return faTwitter;
@@ -171,7 +256,16 @@ const CrudEmpresa = () => {
   };
 
   return (
-    <Box sx={{ padding: { xs: 2, md: 4 }, maxWidth: '900px', margin: 'auto' }}>
+    <Box
+      sx={{
+        padding: { xs: 2, md: 4 },
+        maxWidth: '900px',
+        margin: 'auto',
+        color: isDarkMode ? '#fff' : '#000',
+        backgroundColor: isDarkMode ? '#333' : '#f9f9f9',
+        borderRadius: 2,
+      }}
+    >
       <Box display="flex" justifyContent="center" alignItems="center" position="relative" mb={4}>
         <Avatar
           alt="Logo de la empresa"
@@ -186,9 +280,10 @@ const CrudEmpresa = () => {
             backgroundColor: 'white',
             borderRadius: '50%',
           }}
-          onClick={() => handleOpenModal('logo')}
+          component="label"
         >
           <CameraAltIcon />
+          <input type="file" hidden accept="image/*" onChange={handleUploadImage} />
         </IconButton>
       </Box>
 
@@ -219,6 +314,32 @@ const CrudEmpresa = () => {
             </Box>
           </Grid>
         ))}
+        <Grid item xs={12} sm={6}>
+  <Box
+    sx={{
+      border: '1px solid #ddd',
+      padding: 2,
+      borderRadius: 2,
+      textAlign: 'center',
+      position: 'relative',
+      boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+      '&:hover': {
+        boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
+      },
+    }}
+  >
+    <Typography variant="h6" fontWeight="bold">Slogan</Typography>
+    <Typography>{empresaData.slogan}</Typography>
+    <IconButton
+      sx={{ position: 'absolute', top: 8, right: 8 }}
+      onClick={() => handleOpenModal('slogan')}
+    >
+      <EditIcon />
+    </IconButton>
+  </Box>
+</Grid>
+
+
 
         <Grid item xs={12}>
           <Box
@@ -235,20 +356,26 @@ const CrudEmpresa = () => {
             }}
           >
             <Typography variant="h6" fontWeight="bold">Redes Sociales</Typography>
-            <Box component="ul" sx={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {Object.keys(empresaData.redes_sociales).map((socialKey, index) => (
-                <Box component="li" key={index} display="flex" alignItems="center" mb={1}>
-                  <FontAwesomeIcon icon={getSocialIcon(empresaData.redes_sociales[socialKey])} style={{ marginRight: 10 }} />
-                  <Typography>{empresaData.redes_sociales[socialKey]}</Typography>
-                  <IconButton
-                    sx={{ position: 'absolute', top: 8, right: 8 }}
-                    onClick={() => handleOpenModal('redes_sociales', socialKey)}
+            
+            {Object.keys(empresaData.redes_sociales).length > 0 && (
+              <List>
+                {Object.keys(empresaData.redes_sociales).map((socialKey, index) => (
+                  <ListItem
+                    key={index}
+                    sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                   >
-                    <EditIcon />
-                  </IconButton>
-                </Box>
-              ))}
-            </Box>
+                    <Box display="flex" alignItems="center">
+                      <FontAwesomeIcon icon={getSocialIcon(empresaData.redes_sociales[socialKey])} style={{ marginRight: 10 }} />
+                      <ListItemText primary={empresaData.redes_sociales[socialKey]} />
+                    </Box>
+                    <IconButton onClick={() => handleOpenModal('redes_sociales', socialKey)}>
+                      <EditIcon />
+                    </IconButton>
+                  </ListItem>
+                ))}
+              </List>
+            )}
+
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -277,7 +404,7 @@ const CrudEmpresa = () => {
           }}
         >
           <Typography variant="h6" mb={2}>
-            Editar {currentField.charAt(0).toUpperCase() + currentField.slice(1)}
+            Editar {typeof currentField === 'string' ? currentField.charAt(0).toUpperCase() + currentField.slice(1) : ''}
           </Typography>
           <TextField
             fullWidth

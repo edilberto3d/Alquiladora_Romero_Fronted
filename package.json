@@ -18,6 +18,7 @@
     "@testing-library/user-event": "^13.5.0",
     "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
+    "formik": "^2.4.6",
     "jwt-decode": "^4.0.0",
     "primeflex": "^3.3.1",
     "primeicons": "^7.0.0",
@@ -31,6 +32,7 @@
     "sweetalert2": "^11.14.3",
     "web-vitals": "^2.1.4",
     "winston-daily-rotate-file": "^5.0.0",
+    "yup": "^1.4.0",
     "zxcvbn": "^4.4.2"
   },
   "scripts": {

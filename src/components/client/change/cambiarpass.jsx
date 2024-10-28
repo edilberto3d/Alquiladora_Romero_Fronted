@@ -1,30 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Box, Typography, Button, IconButton, TextField, useTheme } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { useNavigate } from "react-router-dom"; // Para redirigir
+import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import axios from "axios";
-import { v4 as uuidv4 } from "uuid"; // Importar la función para generar UUID
+import { v4 as uuidv4 } from "uuid"; 
 
 
 
 
 const ModalPassword = ({open, onClose, usuario}) => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [csrfToken, setCsrfToken] = useState(""); // Estado para almacenar el token CSRF
-  const [tokenValido, setTokenValido] = useState(""); // Estado para almacenar el token generado
+  const [csrfToken, setCsrfToken] = useState(""); 
+  const [tokenValido, setTokenValido] = useState(""); 
   const navigate = useNavigate(); 
   const theme = useTheme();
 
 
-  // Estilos responsivos del modal
+  
 const style = {
   position: "absolute",
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  bgcolor: theme.palette.background.paper, // Cambiar el fondo según el tema
-  color: theme.palette.text.primary, // Cambiar el color del texto según el tema
+  bgcolor: theme.palette.background.paper, 
+  color: theme.palette.text.primary, 
   boxShadow: 24,
   p: 4,
   borderRadius: 2,
@@ -40,7 +40,7 @@ const style = {
     const fetchCsrfToken = async () => {
       try {
         const response = await axios.get("http://localhost:3001/api/get-csrf-token", { withCredentials: true });
-        setCsrfToken(response.data.csrfToken); // Almacenar el token CSRF
+        setCsrfToken(response.data.csrfToken);
       } catch (error) {
         console.error("Error al obtener el token CSRF:", error);
       }
@@ -93,7 +93,7 @@ const style = {
       });
     } finally {
       setIsProcessing(false);
-      onClose(); // Cerramos el modal después del proceso
+      onClose(); 
     }
   };
 

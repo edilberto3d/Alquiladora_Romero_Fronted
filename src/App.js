@@ -11,11 +11,14 @@ import {ProcesoRegistro } from "./components/shared/autenticacion/procesoRegistr
 import {ValidarCorreoRecuperacion} from './components/shared/autenticacion/recuperacionPass/recuperarPass.jsx'
 import {TokenModalP} from './components/shared/autenticacion/recuperacionPass/cambiarPass.jsx'
 import CambiarPass from "./components/shared/autenticacion/recuperacionPass/cambiarP.jsx";
+import Politicas from "./components/public/PolitasP.jsx";
+import TerminosList from './components/public/terminosP.jsx'
 
 //==================================CLIENTE=====================================================================
 import  PerfilCliente from "./components/client/perfilCliente.jsx";
 import { TokenModal } from "./components/client/change/tokenPassword.jsx";
 import ChangePassword from "./components/client/change/password.jsx";
+import Terminos from './components/admin/terminos/terminos.jsx'
 
 //==================================ADMINSITRADOR=====================================================================
 import InicioAdm from './components/admin/menuadmin.jsx'
@@ -37,6 +40,8 @@ function App() {
       <Route path="/registro" element={<LayaoutEncabezado><Registro /> </LayaoutEncabezado>} />
       <Route path="/recuperarPass" element={<LayaoutEncabezado><ValidarCorreoRecuperacion /> </LayaoutEncabezado>} />
       <Route path="/tokenPassword" element={<LayaoutEncabezado><TokenModalP /> </LayaoutEncabezado>} />
+      <Route path="/politicas" element={<LayaoutEncabezado><Politicas /> </LayaoutEncabezado>} />
+      <Route path="/terminos" element={<LayaoutEncabezado><TerminosList/> </LayaoutEncabezado>} />
       
       <Route path="/updatePass" element={<LayaoutEncabezado><CambiarPass /> </LayaoutEncabezado>} />
        
@@ -45,6 +50,10 @@ function App() {
          <Route path="/cliente/perfil" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< PerfilCliente/></LayaoutEncabezado></RutaPrivada>  }/>
          <Route path="/cliente/cambiarPassword" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< TokenModal/></LayaoutEncabezado></RutaPrivada>  }/>
          <Route path="/cliente/updatePass" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< ChangePassword/></LayaoutEncabezado></RutaPrivada>  }/>
+         <Route path="/cliente/politicas" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< Politicas/></LayaoutEncabezado></RutaPrivada>  }/>
+         <Route path="/cliente/terminos" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< TerminosList/></LayaoutEncabezado></RutaPrivada>  }/>
+
+
 
             {/* Rutas para Cliente */}
             <Route path="/Administrador" element={ <RutaPrivada rolesPermitidos={['Administrador']}> <LayaoutEncabezado>< InicioAdm /></LayaoutEncabezado></RutaPrivada>  }/>

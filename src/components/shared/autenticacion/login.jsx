@@ -37,9 +37,9 @@ const Login = () => {
       const fetchCsrfToken = async () => {
         try {
           const response = await axios.get("http://localhost:3001/api/get-csrf-token", {
-            withCredentials: true, // Para asegurarse de que las cookies de CSRF se envíen
+            withCredentials: true, 
           });
-          setCsrfToken(response.data.csrfToken); // Guardar el token CSRF en el estado
+          setCsrfToken(response.data.csrfToken); 
         } catch (error) {
           console.error("Error al obtener el token CSRF", error);
         }
@@ -66,10 +66,9 @@ const Login = () => {
   };
 
   const handleCaptchaExpire = () => {
-    setErrorMessage("El CAPTCHA ha expirado, por favor recárgalo e inténtalo de nuevo.");
-    setCaptchaValid(false); // Si expira, invalidamos el CAPTCHA
+    setErrorMessage("El CAPTCHA ha expirado. Refrescando...");
     if (recaptchaRef.current) {
-      recaptchaRef.current.reset(); // Reseteamos el CAPTCHA si expira
+      recaptchaRef.current.reset(); 
     }
   };
 
@@ -77,11 +76,9 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
-       //Verfiicamos si no esta bloqueado 
+    
     if (isBlocked) {
-      setErrorMessage(
-        "Esta cuenta esta bloqueado Por  favor, espera 10 minutos para intentarlo de nuevo."
-      );
+      setErrorMessage("Cuenta bloqueada. Espera 10 minutos.");
       return;
     }
 
@@ -103,28 +100,25 @@ const Login = () => {
         {
           email: correo,
         contrasena: contrasena,
-        okenMFA : mfaToken,
+        tokenMFA : mfaToken,
           
         },
         {
           headers: {
             "X-CSRF-Token": csrfToken, 
           },
-          withCredentials: true, // Para enviar las cookies de sesión junto con la solicitud
+          withCredentials: true, 
+          timeout: 10000,
         }
       );
-      
-      
-      console.log("Este es el resultado del login:", response.data);
-    
       const user = response.data?.user;
       setUserId(response.data.userId);
       setUsuarioC(user);
       if (response.data.mfaRequired) {
-        // Si el backend indica que MFA es requerido, mostramos el campo MFA
         setMfaRequired(true);
         return;
       }
+
       if (user) {
         console.log("Usuario obtenido:", user);
         setUser({ id: user.idUsuarios, nombre: user.nombre, rol: user.rol });
@@ -132,7 +126,20 @@ const Login = () => {
         
         // Redirigir según el rol del usuario
         if (user.rol === "Administrador") {
-          navigate("/admin");
+          Swal.fire({
+            title: "¡Inicio de sesión correcto!",
+            text: "Bienvenido.",
+            icon: "success",
+            timer: 2000,
+            showConfirmButton: false,
+            customClass: {
+              popup: "small-swal",
+            },
+            willClose: () => {
+              console.log("Dirigiendo a administrador");
+              navigate("/Administrador");
+            },
+          });
         } else if (user.rol === "Cliente") {
           Swal.fire({
             title: "¡Inicio de sesión correcto!",
@@ -149,6 +156,7 @@ const Login = () => {
             },
           });
         } else {
+          
           setErrorMessage("Rol no reconocido.");
         }
       } else {
@@ -157,7 +165,10 @@ const Login = () => {
     
     } catch (error) {
       console.error("Error durante el login:", error);
-      if (error.response) {
+
+      if (error.code === "ECONNABORTED") {
+        setErrorMessage("La solicitud tardó demasiado. Inténtalo de nuevo.");
+      } else if (error.response) {
         if (error.response.status === 403) {
           setIsBlocked(true);
           setErrorMessage("Dispositivo bloqueado. Por favor, espera 10 minutos.");
@@ -169,12 +180,12 @@ const Login = () => {
       } else {
         setErrorMessage("Error de conexión. Inténtalo de nuevo más tarde.");
       }
-    
+
       // Restablecemos el captcha
       if (recaptchaRef.current) {
         recaptchaRef.current.reset();
+        setCaptchaValid(false);
       }
-    
     } finally {
       setIsLoading(false);
     }
@@ -184,7 +195,7 @@ const Login = () => {
  // Función para enviar el código MFA
  const handleMfaSubmit = async (e) => {
   e.preventDefault();
-  setErrorMessage(""); // Limpiamos el mensaje de error
+  setErrorMessage(""); 
   
   try {
     setIsLoading(true);
@@ -199,9 +210,10 @@ const Login = () => {
       },
       {
         headers: {
-          "X-CSRF-Token": csrfToken, // Añadimos el token CSRF para seguridad
+          "X-CSRF-Token": csrfToken, 
         },
-        withCredentials: true, // Para enviar las cookies
+        withCredentials: true,
+        timeout: 10000,
       }
     );
 
@@ -211,7 +223,7 @@ const Login = () => {
     if (user) {
       // Guardamos el usuario en el contexto o en el estado global
       setUser({ id: user.idUsuarios, nombre: user.nombre, rol: user.rol });
-      setIsLoggedIn(true); // Actualizamos el estado para indicar que el usuario ha iniciado sesión
+      setIsLoggedIn(true); 
 
       // Redirigimos según el rol del usuario
       if (user.rol === "Administrador") {
@@ -236,16 +248,22 @@ const Login = () => {
         });
       }
     } else {
-      // Si no se recibe un usuario, mostramos un mensaje de error
+      
       setErrorMessage("Código MFA incorrecto o vencido.");
     }
 
   } catch (error) {
     console.error("Error durante la verificación MFA:", error);
-    // Si ocurre un error en la solicitud, mostramos un mensaje de error
-    setErrorMessage("Error de verificación MFA. Inténtalo nuevamente.");
+
+    if (error.code === "ECONNABORTED") {
+      setErrorMessage("La solicitud tardó demasiado. Inténtalo de nuevo.");
+    } else if (error.response) {
+      setErrorMessage("Código MFA incorrecto o vencido.");
+    } else {
+      setErrorMessage("Error de conexión. Inténtalo de nuevo más tarde.");
+    }
   } finally {
-    setIsLoading(false); // Detenemos el indicador de carga
+    setIsLoading(false);
   }
 };
 
@@ -259,16 +277,15 @@ const Login = () => {
         color: theme === "light" ? "#000" : "#fff",
         paddingBottom: "80px",
       }}
-    >
-        {errorMessage && (
+    > 
+      {mfaRequired ? (
+        <div className="login-box">
+          <h2 className="login-title">Autenticación MFA</h2>
+          {errorMessage && (
         <Box sx={{ marginBottom: 2, textAlign: "center" }}>
           <Alert severity="error">{errorMessage}</Alert>
         </Box>
       )}
-      
-      {mfaRequired ? (
-        <div className="login-box">
-          <h2 className="login-title">Autenticación MFA</h2>
           <form onSubmit={handleMfaSubmit}>
             <TextField
               label="Código MFA"

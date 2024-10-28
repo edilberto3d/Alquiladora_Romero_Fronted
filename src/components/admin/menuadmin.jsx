@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect ,useContext} from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
     faUser, 
@@ -11,16 +11,17 @@ import {
   } from '@fortawesome/free-solid-svg-icons';
 
 import { useNavigate } from "react-router-dom";
-// import CrudUsuarios from "../crudUsuarios/crudUsuarios";
-// import CrudPerfil from "../perfil/crudPerfil";
+import Swal from "sweetalert2";
+import Terminos from '../admin/terminos/terminos'
 import DatosEmpresa from "../admin/datosEmpresa/datosEmpresa";
-// import Slider from "../slider/slide";
-// import PoliticasPrivacidad from "../datosEmpresa/politicasPrivacidad";
-// import Restaurantes from "../restaurantes/restaurantes";
-// import DetallesComedor from "../restaurantes/detallesRestauarnte";
-import "../../css/admin/inicioMenu.css";
-// import { useAuth } from "../../shared/layaouts/contextoLocalStore";
-// import PersonalizarCorreo from "../personalizacionCorreo/personarCorrreo";
+import Politicas from "./politicas/politicasP";
+import { useAuth } from "../shared/layaouts/AuthContext";
+import '../../css/admin/inicioMenu.css'
+import ErrorLogs from '../admin/inicio/errore'
+import { Box, Typography, Button, List, ListItem, Divider } from "@mui/material";
+import { ThemeContext } from "../shared/layaouts/ThemeContext";
+import DeslindeLegal from "./deslin/deslin";
+import Usuarios from "./usuarios/usuarios";
 
 const InicioAdm = () => {
   const [selectedSection, setSelectedSection] = useState("");
@@ -28,63 +29,97 @@ const InicioAdm = () => {
   const [selectedSubSection, setSelectedSubSection] = useState(null);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [showRestaurantDetails, setShowRestaurantDetails] = useState(false);
+  const { user, isLoading, logout } = useAuth();
+  const { theme } = useContext(ThemeContext);
 
-//   const { user, logout } = useAuth();
+
 
   const renderContent = () => {
-//     if (showRestaurantDetails) {
-//       return (
-//         <DetallesComedor
-//           restaurant={selectedRestaurant}
-//           onBack={() => setShowRestaurantDetails(false)}
-//         />
-//       );
-//     }
-
     switch (selectedSection) {
       case "perfil":
         // return <CrudPerfil />;
-      case "correo":
-        // return <PersonalizarCorreo />;
+      case "Terminos y Condiciones":
+        return <Terminos />;
       case "usuarios":
-        // return <CrudUsuarios />;
+        return <Usuarios />;
       case "datosEmpresa":
         return <DatosEmpresa />;
       case "politicasPrivacidad":
-        // return <PoliticasPrivacidad />;
-      //case "comedores":
-      // return (
-        //   <Restaurantes
-        //     onSelectSubSection={setSelectedSubSection}
-        //     selectedSubSection={selectedSubSection}
-        //     setSelectedRestaurant={setSelectedRestaurant}
-        //     setShowRestaurantDetails={setShowRestaurantDetails}
-        //   />
-      //  );
-      case "slider":
-        // return <Slider />;
-      case "cerrarSesion":
-      //  handleLogout();
-        return null;
+        return <Politicas />;
+        case "Errores de sistema":
+        return <ErrorLogs />;
+      case "Deslinde legal":
+        return <DeslindeLegal />;
+        case "cerrarSesion":
+            logout(); // Llama a la función para cerrar sesión
+            Swal.fire({
+              title: "Sesión cerrada",
+              text: "Has cerrado sesión correctamente.",
+              icon: "success",
+              confirmButtonText: "OK",
+              width: "300px",
+              customClass: {
+                popup: "small-swal",     
+                title: "small-title",
+                content: "small-text",
+                confirmButton: "small-confirm",
+              },
+              buttonsStyling: false,     
+            }).then(() => {
+              navigate("/login");         
+            });
+        
+      
+            return null;
+
       default:
         return (
-          <div style={{ textAlign: "center", padding: "20px" }}>
-            {/* <h1>Bienvenido {u?.username} a administrador Plaza del Sabor</h1> */}
-            <img
-              src="https://res.cloudinary.com/dj3gv2rch/image/upload/v1720053789/Imagenes/yjays5fad1djaehaujun.webp"
-              alt="Plaza del Sabor Logo"
-              style={{ width: "150px", margin: "20px auto" }}
-            />
-            <p>Disfruta de la mejor experiencia gastronómica</p>
-          </div>
+          <div
+    style={{
+      textAlign: "center",
+      padding: "60px 20px",
+      background: theme === "light" ? "#f4f4f4" : "#2c2c2c",
+      borderRadius: "12px",
+      boxShadow: "0 8px 16px rgba(0, 0, 0, 0.2)",
+      position: "relative",
+      overflow: "hidden",
+    }}
+  >
+    {/* Imagen de fondo */}
+    <img
+      src="../../img/carousel10.jpg" 
+      alt="Fondo de bienvenida"
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+        opacity: 0.2,
+        zIndex: -1,
+      }}
+    />
+    <h1 style={{ fontSize: "30px", color: theme === "light" ? "#333" : "#fff", marginBottom: "20px" }}>
+      Bienvenido a <span style={{ color: "#1976d2" }}>Alquiladora Romero</span>
+    </h1>
+    <p
+      style={{
+        fontSize: "18px",
+        color: theme === "light" ? "#555" : "#ccc",
+        maxWidth: "600px",
+        margin: "0 auto",
+        lineHeight: "1.6",
+      }}
+    >
+      Gracias por formar parte de nuestro equipo. Disfruta de la mejor experiencia en administración de servicios de alquiler.
+    </p>
+  
+  </div>
         );
     }
   };
 
-//   const handleLogout = () => {
-//     logout();
-//     navigate("/login");
-//   };
 
   const handleSelectSection = (section) => {
     setSelectedSection(section);
@@ -96,7 +131,7 @@ const InicioAdm = () => {
 
   return (
     <div className="perfil-restaurante">
-      <Sidebar onSelect={handleSelectSection}  setShowRestaurantDetails={setShowRestaurantDetails} />
+      <Sidebar onSelect={handleSelectSection}  setShowRestaurantDetails={setShowRestaurantDetails} user={user}/>
       <div className="content">{renderContent()}</div>
     </div>
   );
@@ -105,8 +140,19 @@ const InicioAdm = () => {
 
 
 const Sidebar = ({ onSelect, user, setShowRestaurantDetails }) => {
+  const { theme } = useContext(ThemeContext);
+  const sidebarStyles = {
+    width: "250px",
+    backgroundColor: theme === "light" ? "#304d6a" : "#222",
+    color: theme === "light" ? "#fff" : "#ccc",
+    padding: "20px",
+    transition: "background-color 0.3s",
+    minHeight: "100vh",
+  };
+
+
   return (
-    <div className="sidebar">
+    <Box sx={sidebarStyles}>
       <div className="profile-info">
         <div className="profile-pic">
           {user?.foto_perfil ? (
@@ -118,7 +164,7 @@ const Sidebar = ({ onSelect, user, setShowRestaurantDetails }) => {
         <div className="country-flag">
           <div>
             <p>
-              <FontAwesomeIcon icon={faUser} /> {user?.username}
+               {user?.nombre}
             </p>
             <p>Administrador</p>
           </div>
@@ -149,7 +195,7 @@ const Sidebar = ({ onSelect, user, setShowRestaurantDetails }) => {
       </li>
     </ul>
   </div>
-  </div>
+  </Box>
   );
 };
 

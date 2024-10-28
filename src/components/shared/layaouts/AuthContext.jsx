@@ -24,6 +24,7 @@ export const AuthProvider = ({ children }) => {
       const response = await axios.get('http://localhost:3001/api/usuarios/perfil', { withCredentials: true });
       if (response.data && response.data.user) {
         setUser(response.data.user);
+        console.log("Valor de context Usuarios", response.data.user)
       } else {
         setUser(null);
       }

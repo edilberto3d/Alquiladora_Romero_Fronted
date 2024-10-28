@@ -4,7 +4,7 @@
   align-items: flex-start;
   min-height: calc(100vh - 100px); /* Asegura que la altura mínima sea el 100% de la pantalla menos el espacio del footer */
   background-color: #f1f1f1;
-  background-image: url('../img/carousel1.jpg');
+  background-image: url('../img/carousel2.jpg');
   background-size: cover;
   background-position: center;
   padding-top: 10px;

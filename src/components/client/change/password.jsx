@@ -107,7 +107,7 @@ const ChangePassword = () => {
     };
 
     validatePasswords();
-  }, [newPassword, confirmPassword]); // Se ejecuta cada vez que estos dos valores cambian
+  }, [newPassword, confirmPassword]); 
 
   // Verificar contraseña actual
   const handlePasswordVerification = async () => {

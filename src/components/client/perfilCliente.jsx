@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import {
   Tabs,
   Tab,
@@ -27,7 +27,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import PersonIcon from "@mui/icons-material/Person";
-import RestaurantIcon from "@mui/icons-material/Restaurant";
 import SecurityIcon from "@mui/icons-material/Security";
 import axios from "axios";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -37,8 +36,9 @@ import "primereact/resources/themes/saga-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import { validateName, validatePhone } from "./dialogos/validalaciones";
 import EditableInput from "./dialogos/EditableInput";
-import CambiarContrasenaModal from "./change/cambiarpass"; 
+import CambiarContrasenaModal from "./change/cambiarpass";
 import MFAComponent from "./Mfa/mfa";
+import { ThemeContext } from "../shared/layaouts/ThemeContext";
 
 const PerfilUsuarioPrime = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -53,20 +53,22 @@ const PerfilUsuarioPrime = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [csrfToken, setCsrfToken] = useState("")
+  const [csrfToken, setCsrfToken] = useState("");
   const [openMfaModal, setOpenMfaModal] = useState(false);
   const theme = useTheme();
-  const [activo, setActivo]= useState(false);
+  const [activo, setActivo] = useState(false);
 
-
-const [openModal, setOpenModal] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
 
   // Obtenemos los datos del usuario desde el backend
 
   const fetchCsrfToken = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/api/get-csrf-token", { withCredentials: true });
-      setCsrfToken(response.data.csrfToken); // Guardar el token CSRF
+      const response = await axios.get(
+        "http://localhost:3001/api/get-csrf-token",
+        { withCredentials: true }
+      );
+      setCsrfToken(response.data.csrfToken);
     } catch (error) {
       console.error("Error al obtener el token CSRF:", error);
     }
@@ -81,6 +83,7 @@ const [openModal, setOpenModal] = useState(false);
         }
       );
       setUsuariosC(response.data.user);
+      setActivo(!!response.data.user.mfa_secret);
       setLastUpdated(new Date(response.data.user.Fecha_ActualizacionF));
       setLoading(false);
       console.log("Esto e sloque obtengo de usuarioC", response.data.user);
@@ -92,7 +95,7 @@ const [openModal, setOpenModal] = useState(false);
   //LLAMAMOS LA FUNCION
   useEffect(() => {
     fetchProfileData();
-    fetchCsrfToken();  
+    fetchCsrfToken();
   }, []);
 
   // Función para mostrar alertas con PrimeReact
@@ -112,28 +115,15 @@ const [openModal, setOpenModal] = useState(false);
     });
   };
 
-
   const handleOpenModal = () => {
     setOpenModal(true);
   };
-  
+
   // Función para cerrar el modal
   const handleCloseModal = () => {
     setOpenModal(false);
+    fetchProfileData()
   };
-
-
-   // Función para manejar el cambio de estado del MFA
-   const handleMfaToggle = (e) => {
-    setIsMfaEnabled(e.target.checked);
-    if (e.target.checked) {
-      // Si MFA está activado, abrimos el modal para mostrar el código QR
-      setOpenMfaModal(true);
-    }
-  };
-
-
-
 
   //=======================================================================================
   //Function para actualizar el foto de perfil
@@ -175,7 +165,7 @@ const [openModal, setOpenModal] = useState(false);
     const now = new Date();
 
     const formData = new FormData();
-    formData.append("imagen", file); // Imagen a subir
+    formData.append("imagen", file);
 
     setUploading(true);
     setIsBlocked(true);
@@ -186,16 +176,15 @@ const [openModal, setOpenModal] = useState(false);
     );
 
     try {
-      // Subir la imagen a Cloudinary mediante la API de imágenes
       const response = await axios.post(
         "http://localhost:3001/api/imagenes/upload",
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            "X-CSRF-Token": csrfToken,  
+            "X-CSRF-Token": csrfToken,
           },
-          withCredentials: true, // Manejo de cookies
+          withCredentials: true,
           onUploadProgress: (progressEvent) => {
             const percentCompleted = Math.round(
               (progressEvent.loaded * 100) / progressEvent.total
@@ -205,7 +194,7 @@ const [openModal, setOpenModal] = useState(false);
         }
       );
 
-      const imageUrl = response.data.url; // Asegúrate de que la URL de la imagen es correcta
+      const imageUrl = response.data.url;
       console.log("URL de la imagen subida:", imageUrl);
 
       // Actualizar el perfil con la nueva URL de la imagen en MySQL
@@ -215,8 +204,7 @@ const [openModal, setOpenModal] = useState(false);
           foto_perfil: imageUrl,
           fecha_actualizacionF: now.toISOString(),
         },
-        { headers: { "X-CSRF-Token": csrfToken }, 
-        withCredentials: true,}
+        { headers: { "X-CSRF-Token": csrfToken }, withCredentials: true }
       );
 
       // Actualizar el estado del frontend con la nueva imagen
@@ -249,10 +237,11 @@ const [openModal, setOpenModal] = useState(false);
       // Asegúrate de que el valor se envíe correctamente en el cuerpo de la solicitud
       const response = await axios.patch(
         `http://localhost:3001/api/usuarios/perfil/${usuariosC.id}/${field}`,
-        { value }, // Aquí enviamos el valor correctamente formateado
+        { value },
         {
-          headers: { "X-CSRF-Token": csrfToken },  
-         withCredentials: true, }
+          headers: { "X-CSRF-Token": csrfToken },
+          withCredentials: true,
+        }
       );
       fetchProfileData();
 
@@ -285,8 +274,7 @@ const [openModal, setOpenModal] = useState(false);
     setOpenMfaModal(false);
   };
 
-
-//==========================================================================================
+  //==========================================================================================
 
   // Renderizamos el contenido solo si ya tenemos los datos cargados
   if (loading) {
@@ -424,7 +412,7 @@ const [openModal, setOpenModal] = useState(false);
                         value={usuariosC?.telefono || ""}
                         validate={validatePhone}
                         onSave={(newPhone) => saveField("telefono", newPhone)}
-                        showHint={true} 
+                        showHint={true}
                         hintMessage="Ingrese su número de teléfono real para recuperación de cuenta."
                       />
                     </Grid>
@@ -432,14 +420,17 @@ const [openModal, setOpenModal] = useState(false);
                 </Box>
               )}
 
-
               {/* Panel de Seguridad */}
               {activeTab === 1 && (
                 <Box sx={{ p: 3 }}>
                   <Typography variant="h6">Seguridad</Typography>
 
                   <Grid container spacing={2}>
-                  <CambiarContrasenaModal open={openModal} onClose={handleCloseModal} usuario={usuariosC} />
+                    <CambiarContrasenaModal
+                      open={openModal}
+                      onClose={handleCloseModal}
+                      usuario={usuariosC}
+                    />
 
                     {/* Contraseña */}
                     <Grid item xs={12} md={6}>
@@ -452,7 +443,7 @@ const [openModal, setOpenModal] = useState(false);
                           readOnly: true,
                           endAdornment: (
                             <InputAdornment position="end">
-                               <IconButton onClick={handleOpenModal}>
+                              <IconButton onClick={handleOpenModal}>
                                 <FontAwesomeIcon icon={faEdit} />
                               </IconButton>
                             </InputAdornment>
@@ -464,78 +455,82 @@ const [openModal, setOpenModal] = useState(false);
 
                     {/* Autenticación Multifactor (MFA) */}
                     <Grid item xs={12} md={7}>
-                    <Box
-                      sx={{
-                        p: 2,
-                        borderRadius: 2,
-                        backgroundColor: '#f5f5f5',
-                        boxShadow: 1,
-                        textAlign: 'left',  
-                        mb: 2,
-                      }}
-                    >
-                      <Typography variant="h6" sx={{ mb: 1 }}>
-                        Autenticación Multifactor
-                      </Typography>
-                      <Typography variant="body2" sx={{ mb: 2 }}>
-                        Requiere un desafío de seguridad adicional al iniciar sesión. Si no puedes pasar este desafío, tendrás la opción de recuperar tu cuenta por correo electrónico.
-                      </Typography>
-
-                      {/* Botón para activar el modal MFA */}
-                      <Button
-  variant="contained"
-  color={activo ? 'secondary' : 'primary'}
-  onClick={handleOpenMfaModal}
-  sx={{ width: 'auto', minWidth: '200px' }}  // Reducir el tamaño del botón
->
-  {activo ? 'Desactivar MFA' : 'Activar MFA'}
-</Button>
-
-                      
-                    </Box>
-
-
-                    {/* Modal para configuración de MFA */}
-                    <Modal
-                      open={openMfaModal}
-                      onClose={handleCloseMfaModal}
-                      aria-labelledby="modal-mfa-title"
-                      aria-describedby="modal-mfa-description"
-                    >
                       <Box
                         sx={{
-                          bgcolor: 'background.paper',
-                          p: 4,
+                          p: 2,
                           borderRadius: 2,
-                          boxShadow: 24,
-                          maxWidth: 500,
-                          mx: 'auto',
-                          mt: '10%',
-                          textAlign: 'center',  // Centrar contenido
+                          backgroundColor:
+                            theme === "light" ? "#f5f5f5" : "#424242", 
+                          boxShadow: 1,
+                          textAlign: "left",
+                          mb: 2,
+                          color: theme === "light" ? "#000" : "#fff", 
                         }}
                       >
-                        <Typography id="modal-mfa-title" variant="h6" gutterBottom>
-                          Configuración de Autenticación Multifactor
+                        <Typography variant="h6" sx={{ mb: 1 }}>
+                          Autenticación Multifactor
                         </Typography>
-                        <MFAComponent userId={usuariosC.id}  setActivo={setActivo}/> 
-
+                        <Typography variant="body2" sx={{ mb: 2 }}>
+                          Requiere un desafío de seguridad adicional al iniciar
+                          sesión. Si no puedes pasar este desafío, tendrás la
+                          opción de recuperar tu cuenta por correo electrónico.
+                        </Typography>
                         <Button
-                          onClick={handleCloseMfaModal}
                           variant="contained"
-                          color="primary"
-                          sx={{ mt: 2 }}
-                          fullWidth
+                          color={activo ?  "secondary": "primary"}
+                          onClick={handleOpenMfaModal}
+                          sx={{ width: "auto", minWidth: "200px" }}
                         >
-                          Cerrar
+                          {activo ? "Desactivar MFA" : "Activar MFA"}
                         </Button>
-
                       </Box>
-                    </Modal>
-                  </Grid>
 
+                      {/* Modal para configuración de MFA */}
+                      <Modal
+                        open={openMfaModal}
+                        onClose={handleCloseMfaModal}
+                        aria-labelledby="modal-mfa-title"
+                        aria-describedby="modal-mfa-description"
+                      >
+                        <Box
+                          sx={{
+                            bgcolor: "background.paper",
+                            p: 4,
+                            borderRadius: 2,
+                            boxShadow: 24,
+                            maxWidth: 500,
+                            mx: "auto",
+                            mt: "10%",
+                            textAlign: "center",
+                          }}
+                        >
+                          <Typography
+                            id="modal-mfa-title"
+                            variant="h6"
+                            gutterBottom
+                          >
+                            Configuración de Autenticación Multifactor
+                          </Typography>
+                          <MFAComponent
+                            userId={usuariosC.id}
+
+                          />
+
+                          <Button
+                            onClick={handleCloseMfaModal}
+                            variant="contained"
+                            color="primary"
+                            sx={{ mt: 2 }}
+                            fullWidth
+                          >
+                            Cerrar
+                          </Button>
+                        </Box>
+                      </Modal>
+                    </Grid>
 
                     {/* Lista de Sesiones Abiertas */}
-                     <Grid item xs={12} md={8}>
+                    <Grid item xs={12} md={8}>
                       <Typography variant="h6">Sesiones Abiertas</Typography>
                       <Typography variant="body2">
                         Revisa dónde tienes la sesión abierta. Puedes cerrar
@@ -561,7 +556,7 @@ const [openModal, setOpenModal] = useState(false);
                           </Typography>
                         )}
                       </List>
-                    </Grid> 
+                    </Grid>
                   </Grid>
                 </Box>
               )}
@@ -576,8 +571,6 @@ const [openModal, setOpenModal] = useState(false);
           </Paper>
         </Grid>
       </Grid>
-    
-     
     </>
   );
 };

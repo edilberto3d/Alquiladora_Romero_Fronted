@@ -2,39 +2,43 @@ import React from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css"; 
+import "../../css/carousel.css"; 
 
 const Carousel = () => {
   const settings = {
     dots: true,
     infinite: true,
-    speed: 500,
+    speed: 1000,
     slidesToShow: 1,
     slidesToScroll: 1,
     fade: true,
     autoplay: true,
-    autoplaySpeed: 3000,
+    autoplaySpeed: 4000,
+    cssEase: "cubic-bezier(0.4, 0, 0.2, 1)",
+    pauseOnHover: true,
+    adaptiveHeight: true,
+    responsive: [
+      {
+        breakpoint: 768,
+        settings: {
+          arrows: false,
+          dots: false,
+          autoplaySpeed: 3000,
+        }
+      }
+    ]
   };
 
   const slides = [
-    { type: "image", src: require("../../img/carousel1.jpg"), alt: "Imagen 1" },
-    { type: "image", src: require("../../img/carousel2.jpg"), alt: "Imagen 2" },
+    { type: "image", src: require("../../img/carousel1.jpg"), alt: "Eventos Especiales" },
+    { type: "image", src: require("../../img/carousel2.jpg"), alt: "Decoración Elegante" },
     { 
       type: "video", 
-      src: "https://www.facebook.com/plugins/video.php?href=https://www.facebook.com/ALQROMERO/videos/244413001925386", // Usa la URL de incrustación
-      alt: "Video de Facebook" 
+      src: "https://www.facebook.com/plugins/video.php?href=https://www.facebook.com/ALQROMERO/videos/244413001925386",
+      alt: "Video Testimonial" 
     },
-    { type: "image", src: require("../../img/carousel5.jpg"), alt: "Imagen 5" },
-    { type: "image", src: require("../../img/carousel6.jpg"), alt: "Imagen 6" },
-    { type: "image", src: require("../../img/carousel7.jpg"), alt: "Imagen 7" },
-    { type: "image", src: require("../../img/carousel8.jpg"), alt: "Imagen 8" },
-    { type: "image", src: require("../../img/carousel9.jpg"), alt: "Imagen 9" },
-    { type: "image", src: require("../../img/carousel10.jpg"), alt: "Imagen q10" },
-    
-
-
-    
-    { type: "image", src: require("../../img/carousel4.jpg"), alt: "Imagen 3" },
-    { type: "image", src: require("../../img/carousel5.jpg"), alt: "Imagen 4" },
+    { type: "image", src: require("../../img/carousel5.jpg"), alt: "Ambientes Únicos" },
+    { type: "image", src: require("../../img/carousel6.jpg"), alt: "Servicio Profesional" },
   ];
 
   return (
@@ -46,20 +50,24 @@ const Carousel = () => {
               <img 
                 src={slide.src} 
                 alt={slide.alt} 
-                className="carousel-image" 
+                className="carousel-image animated-fade-in"
               />
             ) : (
-                <iframe
+              <iframe
                 title={slide.alt}
                 width="100%"
-                height="1000" 
+                height="500px"
                 src={slide.src}
                 frameBorder="0"
                 allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
                 allowFullScreen
-                className="carousel-video"
+                className="carousel-video animated-fade-in"
               />
             )}
+            <div className="carousel-overlay">
+              <h2>{slide.alt}</h2>
+              <button className="carousel-button">Contactar</button>
+            </div>
           </div>
         ))}
       </Slider>

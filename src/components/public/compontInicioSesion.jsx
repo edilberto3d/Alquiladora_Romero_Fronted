@@ -116,10 +116,10 @@ const InconoPerfil = () => {
             <Typography>Mi Perfil</Typography>
           </MenuItem>
 
-          <MenuItem onClick={handleMenuClose} component={Link} to="/configuracion">
+          {/* <MenuItem onClick={handleMenuClose} component={Link} to="/configuracion">
             <FontAwesomeIcon icon={faCog} style={{ marginRight: 10 }} />
             <Typography>Configuración</Typography>
-          </MenuItem>
+          </MenuItem> */}
 
           <Divider />
 

@@ -1413,3 +1413,46 @@
     opacity: 0.8;
   }
   
+
+  /*===================================================*/
+
+  .menu li {
+    padding: 15px 10px;
+    font-size: 18px;
+    transition: background-color 0.3s;
+  }
+  
+  .menu li:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .content {
+    flex: 1;
+    padding: 20px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .perfil-restaurante {
+      flex-direction: column;
+    }
+    
+    .sidebar {
+      width: 100%;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .menu li {
+      font-size: 16px;
+    }
+  }
+
+
+  
+  
+
+  

@@ -17,7 +17,7 @@ export const TokenModal = () => {
   const [csrfToken, setCsrfToken] = useState(""); 
   const location = useLocation();
   const { idUsuario, tokenValido } = location.state || {};
-  const navigate = useNavigate(); // Para redirigir al perfil del cliente
+  const navigate = useNavigate();
   const theme = useTheme();
   
   
@@ -28,7 +28,7 @@ export const TokenModal = () => {
     const fetchCsrfToken = async () => {
       try {
         const response = await axios.get("http://localhost:3001/api/get-csrf-token", { withCredentials: true });
-        setCsrfToken(response.data.csrfToken); // Almacenar el token CSRF
+        setCsrfToken(response.data.csrfToken); 
       } catch (error) {
         console.error("Error al obtener el token CSRF:", error);
       }
@@ -76,7 +76,7 @@ const handleClose = () => {
   const handleSubmit =async () => {
 
     //HACEMOS LA CONSULTA EN LA BASE DE DATOS 
-    const tokenValido = tokens.join(""); // Token ingresado
+    const tokenValido = tokens.join(""); 
 
     try {
       const response = await axios.post(
@@ -137,19 +137,19 @@ const handleClose = () => {
         justifyContent: 'center',
         alignItems: 'center',
         padding: '0.5rem',
-        bgcolor: theme.palette.background.default, // Cambia según el tema
+        bgcolor: theme.palette.background.default, 
       }}
     >
       <Box
         sx={{
-          bgcolor: theme.palette.background.paper, // Cambia según el tema
+          bgcolor: theme.palette.background.paper, 
           boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.15)', 
           p: 2.5,
           borderRadius: '16px',
           maxWidth: '350px',
           width: '100%',
           textAlign: 'center',
-          color: theme.palette.text.primary, // Color del texto dinámico
+          color: theme.palette.text.primary, 
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
