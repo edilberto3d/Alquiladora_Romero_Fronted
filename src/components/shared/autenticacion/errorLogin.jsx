@@ -44,7 +44,7 @@ const Login = () => {
   //fUNCIN PARA MENEJAR LA SESION DE CIERRE
   const logoutUser = async ()=>{
     try {
-      await axios.post("http://localhost:3001/api/usuarios//Delete/login", {}, { withCredentials: true });
+      await axios.post("https://alquiladora-romero-backed-1.onrender.com/api/usuarios//Delete/login", {}, { withCredentials: true });
       navigate("/login");  
     } catch (error) {
       console.error("Error al cerrar sesión", error);
@@ -78,7 +78,7 @@ const Login = () => {
       setIsLoading(true); 
 
       // HACEMOS UNA SOLICITUD POST AL BACKEND ENVIANDO CORREO Y CONTRASEÑA
-      const response = await axios.post("http://localhost:3001/api/usuarios/login", {
+      const response = await axios.post("https://alquiladora-romero-backed-1.onrender.com/api/usuarios/login", {
         email: correo,
         contrasena: contrasena,
       },{ withCredentials: true });

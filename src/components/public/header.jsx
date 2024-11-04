@@ -50,7 +50,7 @@ const Header = () => {
   //cONSTANTES DE INACTIVIDAD
   const [timeLeft, setTimeLeft] = useState(10);
   const [showCountdown, setShowCountdown] = useState(false);
-  const INACTIVITY_LIMIT = 10 * 60 * 1000; //1o mnts
+  const INACTIVITY_LIMIT = 1 * 60 * 1000; //1o mnts
   const ALERT_TIMEOUT = 10000;
   let inactivityTimer = null;
   let countdownTimer = null;
@@ -64,10 +64,10 @@ const Header = () => {
     const fetchCsrfToken = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3001/api/get-csrf-token",
+          "https://alquiladora-romero-backed-1.onrender.com/api/get-csrf-token",
           { withCredentials: true }
         );
-        setCsrfToken(response.data.csrfToken); // Guardar el token CSRF en el estado
+        setCsrfToken(response.data.csrfToken); 
       } catch (error) {
         console.error("Error al obtener el token CSRF:", error);
       }
@@ -85,10 +85,8 @@ const Header = () => {
         // Redirigir basado en el rol si está en la página principal
         if (userType === "Cliente") {
           navigate("/cliente");
-        } else if (userType === "Comedor") {
-          navigate("/comedor");
         } else if (userType === "Administrador") {
-          navigate("/Admnistrador");
+          navigate("/Administrador");
         } else {
           navigate("/");
         }
@@ -99,12 +97,7 @@ const Header = () => {
           !location.pathname.startsWith("/cliente")
         ) {
           navigate("/cliente");
-        } else if (
-          userType === "Comedor" &&
-          !location.pathname.startsWith("/comedor")
-        ) {
-          navigate("/comedor");
-        } else if (
+        }else if (
           userType === "Administrador" &&
           !location.pathname.startsWith("/Administrador")
         ) {
@@ -113,17 +106,41 @@ const Header = () => {
       }
     }
   }, [user, isLoading, location, navigate]);
+
   // Verificar autenticación al cargar la página
   useEffect(() => {
-    if (!user) {
-      // Solo verificar autenticación si el usuario no está definido
-      const verifyAuth = async () => {
-        await checkAuth(); // Verificar si el usuario está autenticado
-        setIsLoggedIn(!!user); // Actualizar el estado de isLoggedIn basado en el usuario autenticado
-      };
-      verifyAuth();
+    const verifyAuth = async () => {
+      const isAuthenticated = await checkAuth();
+      setIsLoggedIn(isAuthenticated);
+      if (!isAuthenticated && user) {
+        // Si el usuario no está autenticado pero existía un usuario en el estado, significa que la sesión expiró
+        await handleSessionExpiration();
+      }
+    };
+    verifyAuth();
+  }, []);
+
+  // Función para manejar la expiración de sesión
+  const handleSessionExpiration = async () => {
+    try {
+      await axios.post(
+        "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/session-expired",
+        { userId: user.idUsuario },
+        {
+          withCredentials: true,
+          headers: {
+            "X-CSRF-Token": csrfToken,
+          },
+        }
+      );
+      setUser(null);
+      setIsLoggedIn(false);
+      navigate("/login");
+    } catch (error) {
+      console.error("Error al registrar la expiración de sesión:", error);
     }
-  }, [user, checkAuth]);
+  };
+
 
   //==================================================================================================================================
   //fUNCION PARA RESETEAR EL TEMPORIZADOR DE INACTIVIDAD
@@ -140,7 +157,7 @@ const Header = () => {
   const handleInactivityLogout = async () => {
     try {
       await axios.post(
-        "http://localhost:3001/api/usuarios/Delete/login",
+        "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/Delete/login",
         {},
         {
           withCredentials: true,
@@ -150,12 +167,13 @@ const Header = () => {
         }
       );
       setIsLoggedIn(false);
+     
       setUser(null);
-      setShowCountdown(false);
       navigate("/login");
-      toast.info("Tu sesión ha sido cerrada por inactividad.");
+      setShowCountdown(false);
+      
     } catch (error) {
-      console.error("Error cerrando sesión por inactividad:", error);
+     
     }
   };
 
@@ -189,6 +207,7 @@ const Header = () => {
       width: "300px",
     }).then((result) => {
       if (result.dismiss === Swal.DismissReason.timer) {
+        handleInactivityLogout();
         console.log("Sesión cerrada por inactividad");
       }
     });
@@ -214,7 +233,7 @@ const Header = () => {
   useEffect(() => {
     const fetchDatosEmpresa = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/api/empresa");
+        const response = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/empresa");
         setDatosEmpresa(response.data);
       } catch (error) {
         console.error("Error al obtener los datos de la empresa:", error);

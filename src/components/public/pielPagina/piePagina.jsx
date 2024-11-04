@@ -38,7 +38,7 @@ const PiePagina = () => {
   useEffect(() => {
     const fetchEmpresaData = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/api/empresa", {
+        const response = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/empresa", {
           withCredentials: true,
         });
         setEmpresa(response.data);
@@ -226,6 +226,42 @@ const PiePagina = () => {
               
               </>
             )}
+
+              {user && user?.rol ? (<>
+              <Link
+              to="/cliente/deslin"
+              style={{
+                textDecoration: "none",
+                color: theme === "light" ? "#007bff" : "#4fc3f7",
+                display: "block",
+                marginBottom: "8px",
+              }}
+            >
+              Términos y Condiciones
+            </Link>
+            
+            
+            </>):(
+              <>
+               <Link
+              to="/deslin"
+              style={{
+                textDecoration: "none",
+                color: theme === "light" ? "#007bff" : "#4fc3f7",
+                display: "block",
+                marginBottom: "8px",
+              }}
+            >
+              Deslinde legal
+            </Link>
+              
+              </>
+            )}
+
+
+
+
+
            
           </Box>
         </Grid>

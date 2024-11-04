@@ -7,7 +7,7 @@ const TerminosList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const apiUrl = 'http://localhost:3001/api/politicas';
+  const apiUrl = 'https://alquiladora-romero-backed-1.onrender.com/api/politicas';
 
   useEffect(() => {
     const fetchTerminos = async () => {

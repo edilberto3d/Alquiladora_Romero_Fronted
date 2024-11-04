@@ -38,7 +38,7 @@ const CrudEmpresa = () => {
     correo: '',
     telefono: '',
     slogan: '',
-    redes_sociales: {}, // Redes sociales como objeto dinámico
+    redes_sociales: {}, 
   });
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -62,7 +62,7 @@ const CrudEmpresa = () => {
   useEffect(() => {
     const fetchCsrfToken = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/api/get-csrf-token", {
+        const response = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/get-csrf-token", {
           withCredentials: true,
         });
         setCsrfToken(response.data.csrfToken);
@@ -75,10 +75,11 @@ const CrudEmpresa = () => {
 
   const fetchEmpresaData = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/api/empresa", {
+      const response = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/empresa", {
         headers: { "X-CSRF-Token": csrfToken },
         withCredentials: true,
       });
+      console.log("date.correo", response.data.logo_url);
       setEmpresaData({
         logo: response.data.logo_url || '',
         direccion: response.data.direccion || '',
@@ -127,7 +128,7 @@ const CrudEmpresa = () => {
     try {
       // Subir la imagen
       const response = await axios.post(
-        "http://localhost:3001/api/imagenes/upload",
+        "https://alquiladora-romero-backed-1.onrender.com/api/imagenes/upload",
         formData,
         {
           headers: {
@@ -151,7 +152,7 @@ const CrudEmpresa = () => {
       const updatedData = { ...empresaData, logo_url: imageUrl };
       console.log("Este es updateData", updatedData)
 
-      await axios.post(`http://localhost:3001/api/empresa/actualizar`, updatedData, {
+      await axios.post(`https://alquiladora-romero-backed-1.onrender.com/api/empresa/actualizar`, updatedData, {
         headers: {
           'Content-Type': 'application/json',
           'X-CSRF-Token': csrfToken,
@@ -223,7 +224,7 @@ const CrudEmpresa = () => {
     }
 
     try {
-      await axios.post(`http://localhost:3001/api/empresa/actualizar`, updatedData, {
+      await axios.post(`https://alquiladora-romero-backed-1.onrender.com/api/empresa/actualizar`, updatedData, {
         headers: {
           'Content-Type': 'application/json',
           'X-CSRF-Token': csrfToken,

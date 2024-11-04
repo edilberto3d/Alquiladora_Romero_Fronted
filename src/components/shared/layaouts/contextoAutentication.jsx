@@ -9,7 +9,7 @@ const RutaPrivada = ({ children, rolesPermitidos }) => {
 
   if (isLoading) {
     console.log("Verificando autenticación...");
-    return <div>Loading...</div>; // Puedes reemplazarlo con un loader
+    return <div>Loading...</div>; 
   }
 
   if (!user) {

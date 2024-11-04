@@ -40,7 +40,7 @@ const ChangePassword = () => {
   useEffect(() => {
     const fetchCsrfToken = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/api/get-csrf-token", {
+        const response = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/get-csrf-token", {
           withCredentials: true,
         });
         setCsrfToken(response.data.csrfToken);
@@ -113,7 +113,7 @@ const ChangePassword = () => {
   const handlePasswordVerification = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:3001/api/usuarios/verify-password",
+        "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/verify-password",
         { currentPassword, idUsuario },
         {
           headers: {
@@ -167,7 +167,7 @@ const ChangePassword = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:3001/api/usuarios/change-password",
+        "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/change-password",
         { idUsuario, newPassword },
         {
           headers: {

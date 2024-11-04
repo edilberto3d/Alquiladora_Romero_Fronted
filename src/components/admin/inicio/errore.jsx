@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
-import { Box, CircularProgress, Typography, Paper, Grid, Alert, AlertTitle, Divider, IconButton, Tooltip, Button } from '@mui/material';
-import { ErrorOutline, Refresh, ArrowBack, ArrowForward } from '@mui/icons-material';
+import { 
+  Box, CircularProgress, Typography, Paper, Grid, Alert, Divider, IconButton, Tooltip, Button ,AlertTitle
+} from '@mui/material';
+import { ErrorOutline, Refresh, ArrowBack, ArrowForward} from '@mui/icons-material';
 import { ThemeContext } from "../../shared/layaouts/ThemeContext";
 
 const ErrorLogs = () => {
@@ -9,14 +11,14 @@ const ErrorLogs = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const logsPerPage = 3;
+  const logsPerPage = 5; // Aumentamos el número de logs por página
   const [logs, setLogs] = useState([]);
 
   const fetchLogs = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get('http://localhost:3001/api/logs');
+      const response = await axios.get('https://alquiladora-romero-backed-1.onrender.com/api/logs');
       setLogs(response.data);
     } catch (error) {
       console.error('Error al obtener logs:', error);
@@ -30,7 +32,7 @@ const ErrorLogs = () => {
     fetchLogs();
   }, []);
 
-  // Calculate the logs to display on the current page
+  // Cálculo de logs para la página actual
   const indexOfLastLog = currentPage * logsPerPage;
   const indexOfFirstLog = indexOfLastLog - logsPerPage;
   const currentLogs = logs.slice(indexOfFirstLog, indexOfLastLog);
@@ -73,14 +75,13 @@ const ErrorLogs = () => {
         <Box>
           <Grid container spacing={3}>
             {currentLogs.map((log, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
+              <Grid item xs={12} key={index}>
                 <Paper 
                   elevation={4} 
                   sx={{ 
                     padding: 3, 
                     borderRadius: 2, 
                     bgcolor: theme === 'dark' ? '#333' : '#f9f9f9', 
-                    height: '100%' 
                   }}
                 >
                   <Alert severity="error" icon={false} sx={{ bgcolor: theme === 'dark' ? '#2e2e2e' : '#fdecea', border: '1px solid #f5c6cb' }}>
@@ -96,11 +97,14 @@ const ErrorLogs = () => {
                     <Typography variant="body1" sx={{ mb: 1, fontWeight: 'bold', color: 'text.primary' }}>
                       Mensaje: {log.message}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: theme === 'dark' ? '#ccc' : 'text.secondary' }}>
-                      Detalles: {log.stack || 'Sin detalles adicionales.'}
+                    <Typography variant="body2" sx={{ color: theme === 'dark' ? '#ccc' : 'text.secondary', whiteSpace: 'pre-wrap' }}>
+                      <strong>Detalles:</strong> {log.stack || 'Sin detalles adicionales.'}
                     </Typography>
                     <Divider sx={{ my: 2 }} />
                     <Typography variant="caption" color="text.secondary">
+                      <strong>Método:</strong> {log.method || 'Desconocido'}<br/>
+                      <strong>URL:</strong> {log.url || 'Desconocida'}<br/>
+                      <strong>IP:</strong> {log.ip || 'Desconocida'}<br/>
                       <strong>Fuente:</strong> {log.source || 'Desconocida'}
                     </Typography>
                   </Alert>
@@ -109,7 +113,7 @@ const ErrorLogs = () => {
             ))}
           </Grid>
           
-          {/* Pagination controls */}
+          {/* Controles de paginación */}
           <Box display="flex" justifyContent="center" alignItems="center" mt={4}>
             <Button
               startIcon={<ArrowBack />}

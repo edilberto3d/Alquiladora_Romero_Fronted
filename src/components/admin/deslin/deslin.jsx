@@ -54,7 +54,7 @@ const DeslindeLegal = () => {
   const [currentVersion, setCurrentVersion] = useState(null);
   const { theme } = useContext(ThemeContext);
 
-  const apiUrl = 'http://localhost:3001/api/deslin';
+  const apiUrl = 'https://alquiladora-romero-backed-1.onrender.com/api/deslin';
 
   useEffect(() => {
     fetchCsrfToken();
@@ -63,7 +63,7 @@ const DeslindeLegal = () => {
 
   const fetchCsrfToken = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/get-csrf-token', {
+      const response = await axios.get('https://alquiladora-romero-backed-1.onrender.com/api/get-csrf-token', {
         withCredentials: true,
       });
       setCsrfToken(response.data.csrfToken);

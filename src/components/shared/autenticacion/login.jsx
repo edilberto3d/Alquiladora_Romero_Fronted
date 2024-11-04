@@ -36,7 +36,7 @@ const Login = () => {
     useEffect(() => {
       const fetchCsrfToken = async () => {
         try {
-          const response = await axios.get("http://localhost:3001/api/get-csrf-token", {
+          const response = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/get-csrf-token", {
             withCredentials: true, 
           });
           setCsrfToken(response.data.csrfToken); 
@@ -96,7 +96,7 @@ const Login = () => {
       setIsLoading(true);
       // Hacemos una solicitud POST
       const response = await axios.post(
-        "http://localhost:3001/api/usuarios/login",
+        "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/login",
         {
           email: correo,
         contrasena: contrasena,
@@ -173,9 +173,9 @@ const Login = () => {
           setIsBlocked(true);
           setErrorMessage("Dispositivo bloqueado. Por favor, espera 10 minutos.");
         } else if (error.response.status === 401) {
-          setErrorMessage("Correo o contraseña incorrectos.");
+          setErrorMessage("Credenciales incorrectos.");
         } else {
-          setErrorMessage("Ocurrió un error inesperado.");
+          setErrorMessage("Credenciales incorrectos.");
         }
       } else {
         setErrorMessage("Error de conexión. Inténtalo de nuevo más tarde.");
@@ -202,7 +202,7 @@ const Login = () => {
 
     // Realizamos la solicitud al backend para verificar el código MFA
     const response = await axios.post(
-      "http://localhost:3001/api/usuarios/login",
+      "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/login",
       {
         email: correo,
         contrasena: contrasena,

@@ -51,7 +51,7 @@ const Terminos = () => {
   const [csrfToken, setCsrfToken] = useState('');
   const { theme } = useContext(ThemeContext);
 
-  const apiUrl = 'http://localhost:3001/api/terminos';
+  const apiUrl = 'https://alquiladora-romero-backed-1.onrender.com/api/terminos';
 
   useEffect(() => {
     fetchCsrfToken();
@@ -60,7 +60,7 @@ const Terminos = () => {
 
   const fetchCsrfToken = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/get-csrf-token', {
+      const response = await axios.get('https://alquiladora-romero-backed-1.onrender.com/api/get-csrf-token', {
         withCredentials: true,
       });
       setCsrfToken(response.data.csrfToken);

@@ -27,7 +27,7 @@ export const TokenModal = () => {
   useEffect(() => {
     const fetchCsrfToken = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/api/get-csrf-token", { withCredentials: true });
+        const response = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/get-csrf-token", { withCredentials: true });
         setCsrfToken(response.data.csrfToken); 
       } catch (error) {
         console.error("Error al obtener el token CSRF:", error);
@@ -80,7 +80,7 @@ const handleClose = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3001/api/usuarios/validarToken/contrasena", 
+        "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/validarToken/contrasena", 
         { idUsuario: idUsuario, token: tokenValido },
         {
           headers: {

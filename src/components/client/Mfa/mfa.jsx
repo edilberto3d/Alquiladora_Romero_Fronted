@@ -26,7 +26,7 @@ const MFAComponent = ({ userId, }) => {
   useEffect(() => {
     const fetchCsrfToken = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/api/get-csrf-token", {
+        const response = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/get-csrf-token", {
           withCredentials: true,
         });
         setCsrfToken(response.data.csrfToken);
@@ -37,7 +37,7 @@ const MFAComponent = ({ userId, }) => {
 
     const checkMfaStatus = async () => {
       try {
-        const response = await axios.get(`http://localhost:3001/api/mfa/mfa-status/${userId}`, {
+        const response = await axios.get(`https://alquiladora-romero-backed-1.onrender.com/api/mfa/mfa-status/${userId}`, {
           headers: { 'X-CSRF-Token': csrfToken },
           withCredentials: true,
         });
@@ -59,7 +59,7 @@ const MFAComponent = ({ userId, }) => {
     setLoading(true);
     try {
       const response = await axios.post(
-        'http://localhost:3001/api/mfa/enable-mfa',
+        'https://alquiladora-romero-backed-1.onrender.com/api/mfa/enable-mfa',
         { userId: userId },
         {
           headers: {
@@ -84,7 +84,7 @@ const MFAComponent = ({ userId, }) => {
   const handleVerifyMFA = async () => {
     try {
       const response = await axios.post(
-        'http://localhost:3001/api/mfa/verify-mfa',
+        'https://alquiladora-romero-backed-1.onrender.com/api/mfa/verify-mfa',
         {
           userId: userId,        
           token: verificationCode 
@@ -121,7 +121,7 @@ const MFAComponent = ({ userId, }) => {
 
     try {
       const response = await axios.post(
-        'http://localhost:3001/api/mfa/verify-mfa',
+        'https://alquiladora-romero-backed-1.onrender.com/api/mfa/verify-mfa',
         {
           userId: userId,
           token: verificationCode,
@@ -134,7 +134,7 @@ const MFAComponent = ({ userId, }) => {
 
       if (response.data.message === 'Código MFA verificado correctamente.') {
         await axios.post(
-          'http://localhost:3001/api/mfa/disable-mfa',
+          'https://alquiladora-romero-backed-1.onrender.com/api/mfa/disable-mfa',
           { userId: userId },
           {
             headers: { 'X-CSRF-Token': csrfToken },

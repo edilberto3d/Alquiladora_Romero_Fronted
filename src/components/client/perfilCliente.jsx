@@ -65,7 +65,7 @@ const PerfilUsuarioPrime = () => {
   const fetchCsrfToken = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:3001/api/get-csrf-token",
+        "https://alquiladora-romero-backed-1.onrender.com/api/get-csrf-token",
         { withCredentials: true }
       );
       setCsrfToken(response.data.csrfToken);
@@ -77,7 +77,7 @@ const PerfilUsuarioPrime = () => {
   const fetchProfileData = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:3001/api/usuarios/perfil",
+        "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/perfil",
         {
           withCredentials: true,
         }
@@ -177,7 +177,7 @@ const PerfilUsuarioPrime = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3001/api/imagenes/upload",
+        "https://alquiladora-romero-backed-1.onrender.com/api/imagenes/upload",
         formData,
         {
           headers: {
@@ -199,7 +199,7 @@ const PerfilUsuarioPrime = () => {
 
       // Actualizar el perfil con la nueva URL de la imagen en MySQL
       await axios.patch(
-        `http://localhost:3001/api/usuarios/perfil/${usuariosC.id}/foto`,
+        `https://alquiladora-romero-backed-1.onrender.com/api/usuarios/perfil/${usuariosC.id}/foto`,
         {
           foto_perfil: imageUrl,
           fecha_actualizacionF: now.toISOString(),
@@ -236,7 +236,7 @@ const PerfilUsuarioPrime = () => {
     try {
       // Asegúrate de que el valor se envíe correctamente en el cuerpo de la solicitud
       const response = await axios.patch(
-        `http://localhost:3001/api/usuarios/perfil/${usuariosC.id}/${field}`,
+        `https://alquiladora-romero-backed-1.onrender.com/api/usuarios/perfil/${usuariosC.id}/${field}`,
         { value },
         {
           headers: { "X-CSRF-Token": csrfToken },

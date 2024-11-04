@@ -45,13 +45,13 @@ const Registro = ({ guardarCorreo }) => {
     const fetchUsuariosYCsrf = async () => {
       try {
         // Obtener el token CSRF del backend
-        const csrfResponse = await axios.get("http://localhost:3001/api/get-csrf-token", {
+        const csrfResponse = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/get-csrf-token", {
           withCredentials: true,
         });
         setCsrfToken(csrfResponse.data.csrfToken); // Guardar el token CSRF
 
         // Obtener la lista de usuarios
-        const response = await axios.get("http://localhost:3001/api/usuarios");
+        const response = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/usuarios");
         setUsuarios(response.data);
       } catch (error) {
         console.error("Error al cargar los usuarios o el token CSRF", error);
@@ -207,12 +207,12 @@ const Registro = ({ guardarCorreo }) => {
         (usuarios) => usuarios.Correo === guardarCorreo
       );
       if (usuarioCorreo) {
-        setErrors("Verficar Correo");
-        console.log("Error el correo ya esta registardo");
+        setErrors("Correo ya existe");
+       
       } else {
         try {
           const response = await axios.post(
-            "http://localhost:3001/api/usuarios",
+            "https://alquiladora-romero-backed-1.onrender.com/api/usuarios",
             {
               nombre: formData.nombre,
               apellidoPaterno: formData.apellidoPaterno,

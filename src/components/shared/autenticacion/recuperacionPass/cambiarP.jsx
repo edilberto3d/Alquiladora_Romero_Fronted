@@ -104,7 +104,7 @@ const CambiarPass = () => {
     };
 
     validatePasswords();
-  }, [newPassword, confirmPassword]); // Se ejecuta cada vez que estos dos valores cambian
+  }, [newPassword, confirmPassword]); 
 
   // Función para obtener el color según la fortaleza de la contraseña
   const getStrengthColor = (score) => {
@@ -149,19 +149,33 @@ const CambiarPass = () => {
         });
         setIsLoading(false);
         navigate("/login");
-      } else if (response.data.usedBefore) {
-        setError("Ya has utilizado esta contraseña anteriormente.");
-        setIsLoading(false);
       } else {
         setError("Error al cambiar la contraseña.");
         setIsLoading(false);
       }
     } catch (err) {
-      setError("Error al cambiar la contraseña.");
       setIsLoading(false);
+      if (err.response) {
+        if (err.response.status === 409 && err.response.data.usedBefore) {
+          setError(err.response.data.message);
+        } else if (err.response.status === 400) {
+          setError(err.response.data.message);
+        } else if (err.response.status === 403) {
+          setError("No tienes permiso para cambiar la contraseña de este usuario.");
+        } else if (err.response.status === 500) {
+          setError("Error interno del servidor. Por favor, inténtalo más tarde.");
+        } else {
+          setError(err.response.data.message || "Error al cambiar la contraseña.");
+        }
+      } else if (err.request) {
+        setError("No se recibió respuesta del servidor. Verifica tu conexión.");
+      } else {
+        setError("Error al realizar la solicitud. Por favor, inténtalo de nuevo.");
+      }
     }
   };
 
+  
   return (
     <Box
       sx={{

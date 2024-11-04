@@ -13,6 +13,7 @@ import {TokenModalP} from './components/shared/autenticacion/recuperacionPass/ca
 import CambiarPass from "./components/shared/autenticacion/recuperacionPass/cambiarP.jsx";
 import Politicas from "./components/public/PolitasP.jsx";
 import TerminosList from './components/public/terminosP.jsx'
+import Deslin from './components/public/deslinP.jsx'
 
 //==================================CLIENTE=====================================================================
 import  PerfilCliente from "./components/client/perfilCliente.jsx";
@@ -42,6 +43,7 @@ function App() {
       <Route path="/tokenPassword" element={<LayaoutEncabezado><TokenModalP /> </LayaoutEncabezado>} />
       <Route path="/politicas" element={<LayaoutEncabezado><Politicas /> </LayaoutEncabezado>} />
       <Route path="/terminos" element={<LayaoutEncabezado><TerminosList/> </LayaoutEncabezado>} />
+      <Route path="/deslin" element={<LayaoutEncabezado><Deslin/> </LayaoutEncabezado>} />
       
       <Route path="/updatePass" element={<LayaoutEncabezado><CambiarPass /> </LayaoutEncabezado>} />
        
@@ -52,6 +54,7 @@ function App() {
          <Route path="/cliente/updatePass" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< ChangePassword/></LayaoutEncabezado></RutaPrivada>  }/>
          <Route path="/cliente/politicas" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< Politicas/></LayaoutEncabezado></RutaPrivada>  }/>
          <Route path="/cliente/terminos" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< TerminosList/></LayaoutEncabezado></RutaPrivada>  }/>
+         <Route path="/cliente/deslin" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< Deslin/></LayaoutEncabezado></RutaPrivada>  }/>
 
 
 

@@ -28,7 +28,7 @@ export const ValidarCorreo = ({ onValidationSuccess , setGuardarCorreo}) => {
   useEffect(() => {
     const getCsrfToken = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/api/get-csrf-token', { withCredentials: true });
+        const response = await axios.get('https://alquiladora-romero-backed-1.onrender.com/api/get-csrf-token', { withCredentials: true });
         setCsrfToken(response.data.csrfToken); 
       } catch (error) {
         console.error("Error al obtener el token CSRF:", error);
@@ -39,7 +39,7 @@ export const ValidarCorreo = ({ onValidationSuccess , setGuardarCorreo}) => {
 
     const ConsultarUsuarios = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/api/usuarios");
+        const response = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/usuarios");
         setUsuarios(response.data);
       } catch (error) {
         console.error("Error al cargar los usuarios: ", error);
@@ -65,7 +65,7 @@ export const ValidarCorreo = ({ onValidationSuccess , setGuardarCorreo}) => {
   const isValidEmail = async (email) => {
     try {
       const response = await fetch(
-        "http://localhost:3001/api/email/validate-email",
+        "https://alquiladora-romero-backed-1.onrender.com/api/email/validate-email",
         {
           method: "POST",
           headers: { 
@@ -147,7 +147,7 @@ export const ValidarCorreo = ({ onValidationSuccess , setGuardarCorreo}) => {
        storeEncryptedToken(shortUUID);
       // Envío de correo con el token
       await axios.post(
-        "http://localhost:3001/api/email/send",
+        "https://alquiladora-romero-backed-1.onrender.com/api/email/send",
         {
           correo: email,
           captchaToken: captchaValue,
