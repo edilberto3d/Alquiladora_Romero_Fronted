@@ -19,15 +19,16 @@ export const ValidarCorreoRecuperacion = () => {
   const secretKey = 'TokenValidation2024';
   const recaptchaRef = useRef(null);
   const [csrfToken, setCsrfToken] = useState("");
+  const [isEmailValid, setIsEmailValid] = useState(false);
   const navigate = useNavigate(); 
 
-  const theme = useTheme(); // Acceso al tema actual (oscuro o claro)
+  const theme = useTheme(); 
 
   // Obtener usuarios y el token CSRF
   useEffect(() => {
     const getCsrfToken = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/api/get-csrf-token', { withCredentials: true });
+        const response = await axios.get('https://alquiladora-romero-backed-1.onrender.com/api/get-csrf-token', { withCredentials: true });
         setCsrfToken(response.data.csrfToken); 
       } catch (error) {
         console.error("Error al obtener el token CSRF:", error);
@@ -38,7 +39,14 @@ export const ValidarCorreoRecuperacion = () => {
 
     const ConsultarUsuarios = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/api/usuarios");
+        const response = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/usuarios",
+          {
+            headers: {
+              "X-CSRF-Token": csrfToken,  
+            },
+            withCredentials: true,
+          }
+        );
         setUsuarios(response.data);
       } catch (error) {
         console.error("Error al cargar los usuarios: ", error);
@@ -47,6 +55,15 @@ export const ValidarCorreoRecuperacion = () => {
     getCsrfToken();
     ConsultarUsuarios();
   }, []);
+
+
+  const validateEmail = (email) => {
+    // Expresión regular simple para validar email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+
 
   // Manejo de CAPTCHA
   const onCaptchaChange = (value) => {
@@ -68,6 +85,7 @@ export const ValidarCorreoRecuperacion = () => {
     localStorage.setItem("tokenExpiration", expirationTime);
   };
 
+
   // Validar correo y CAPTCHA antes de enviar
   const handleValidation = async (e) => {
     e.preventDefault();
@@ -80,11 +98,17 @@ export const ValidarCorreoRecuperacion = () => {
       return;
     }
 
+    if (!isEmailValid) {
+      setErrorMessage("Por favor ingresa un correo electrónico válido.");
+      setLoading(false);
+      return;
+    }
+
 
   // Validar si el correo electrónico existe en la base de datos
   const usuarioEncontrado = usuarios.find((usuario) => {
-    const correoBD = usuario.Correo.toLowerCase().trim();  // Correo en la BD en minúsculas y sin espacios
-    const correoInput = email.toLowerCase().trim();  // Correo ingresado en minúsculas y sin espacios
+    const correoBD = usuario.Correo.toLowerCase().trim(); 
+    const correoInput = email.toLowerCase().trim();  
     return correoBD === correoInput;
   });
   
@@ -101,7 +125,7 @@ export const ValidarCorreoRecuperacion = () => {
     try {
       storeEncryptedToken(shortUUID);
       await axios.post(
-        "http://localhost:3001/api/email/cambiarpass",
+        "https://alquiladora-romero-backed-1.onrender.com/api/email/cambiarpass",
         {
           correo: email,
           shortUUID: shortUUID,
@@ -136,73 +160,140 @@ export const ValidarCorreoRecuperacion = () => {
   };
 
   return (
-    <Container 
-      maxWidth="sm"
-      sx={{
-        margin: '20px auto',  // Margin centrado
-        backgroundColor: theme.palette.mode === 'dark' ? "#333" : "#fff", // Modo oscuro o claro
-        color: theme.palette.mode === 'dark' ? "#fff" : "#000",
-        padding: '20px',
-        borderRadius: '10px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-        transition: 'background-color 0.3s ease, color 0.3s ease',
-      }}
-    >
-      <Box mt={3} p={3} textAlign="center">
-        <Typography variant="h4" gutterBottom>
-          Paso 1: Ingresa tu correo
-        </Typography>
+    <Container
+    maxWidth="sm"
+    sx={{
+      margin: "20px auto",
+      backgroundColor: theme.palette.mode === "dark" ? "#282c34" : "#ffffff",
+      color: theme.palette.mode === "dark" ? "#ffffff" : "#333333",
+      padding: "25px",
+      borderRadius: "15px",
+      boxShadow: "0 6px 20px rgba(0, 0, 0, 0.15)",
+      transition: "background-color 0.3s ease, color 0.3s ease",
+    }}
+  >
+    <Box mt={3} p={3} textAlign="center">
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{
+          fontWeight: "bold",
+          fontSize: { xs: "1.8rem", sm: "2rem" },
+          color: theme.palette.primary.main,
+        }}
+      >
+        Paso 1: Ingresa tu correo
+      </Typography>
 
-        {errorMessage && (
-          <Alert 
-            severity="error" 
-            sx={{ mb: 2, fontSize: '0.875rem', padding: '10px' }}  // Tamaño de error pequeño
+      {errorMessage && (
+        <Alert
+          severity="error"
+          variant="filled"
+          sx={{
+            mb: 2,
+            fontSize: "0.9rem",
+            padding: "15px",
+            textAlign: "left",
+            borderRadius: "10px",
+            "& .MuiAlert-message": {
+              width: "100%",
+            },
+          }}
+        >
+          <AlertTitle
+            sx={{ fontSize: "1.1rem", fontWeight: "bold", mb: 1 }}
           >
-            <AlertTitle sx={{ fontSize: '0.95rem' }}>Error</AlertTitle>
-            {errorMessage}
-          </Alert>
-        )}
+            Error
+          </AlertTitle>
+          {errorMessage}
+        </Alert>
+      )}
 
-        <form onSubmit={handleValidation}>
-          <TextField
-            label="Correo Electrónico"
-            variant="outlined"
-            fullWidth
-            required
-            margin="normal"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            InputProps={{
-              startAdornment: <FontAwesomeIcon icon={faEnvelope} style={{ marginRight: '8px' }} />
-            }}
-            sx={{ 
-              backgroundColor: theme.palette.mode === 'dark' ? "#555" : "#f0f0f0",
-              borderRadius: '5px'
+      <form onSubmit={handleValidation}>
+        <TextField
+          label="Correo Electrónico"
+          variant="outlined"
+          fullWidth
+          required
+          margin="normal"
+          value={email}
+          onChange={(e) => {
+            const value = e.target.value;
+            setEmail(value);
+            setIsEmailValid(validateEmail(value));
+            setErrorMessage("");
+          }}
+          InputProps={{
+            startAdornment: (
+              <FontAwesomeIcon
+                icon={faEnvelope}
+                style={{
+                  marginRight: "8px",
+                  color: theme.palette.primary.main,
+                }}
+              />
+            ),
+          }}
+          sx={{
+            backgroundColor:
+              theme.palette.mode === "dark" ? "#444" : "#f7f7f7",
+            borderRadius: "8px",
+            "& .MuiOutlinedInput-root": {
+              "&:hover fieldset": {
+                borderColor: theme.palette.primary.main,
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: theme.palette.primary.dark,
+              },
+            },
+          }}
+        />
+
+        <Box mt={3} mb={2} display="flex" justifyContent="center">
+          <ReCAPTCHA
+            ref={recaptchaRef}
+            sitekey="6Le0dGAqAAAAAPQMdd-d6ZH8nZWTgC9HEHpO6R-7"
+            onChange={onCaptchaChange}
+            onErrored={handleCaptchaError}
+            sx={{
+              "& .g-recaptcha": {
+                width: "100%",
+              },
             }}
           />
+        </Box>
 
-          <Box mt={2} mb={2} display="flex" justifyContent="center">
-            <ReCAPTCHA
-              ref={recaptchaRef}
-              sitekey="6Le0dGAqAAAAAPQMdd-d6ZH8nZWTgC9HEHpO6R-7"
-              onChange={onCaptchaChange}
-              onErrored={handleCaptchaError}
-            />
-          </Box>
-
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            disabled={loading}
-            startIcon={loading ? <CircularProgress size={20} /> : <FontAwesomeIcon icon={faCheckCircle} />}
-            sx={{ mt: 2 }}
-          >
-            {loading ? "Validando..." : "Validar"}
-          </Button>
-        </form>
-      </Box>
-    </Container>
-  );
+        <Button
+          type="submit"
+          fullWidth
+          variant="contained"
+          color="primary"
+          disabled={loading || !isEmailValid}
+          startIcon={
+            loading ? (
+              <CircularProgress size={20} />
+            ) : (
+              <FontAwesomeIcon icon={faCheckCircle} />
+            )
+          }
+          sx={{
+            mt: 2,
+            fontSize: "1rem",
+            fontWeight: "bold",
+            padding: "10px 20px",
+            borderRadius: "10px",
+            boxShadow: "0 4px 10px rgba(0, 0, 0, 0.2)",
+            transition: "background-color 0.3s ease, transform 0.2s ease",
+            "&:hover": {
+              backgroundColor: theme.palette.primary.dark,
+              transform: "scale(1.02)",
+            },
+          }}
+        >
+          {loading ? "Validando..." : "Validar"}
+        </Button>
+      </form>
+    </Box>
+  </Container>
+);
 };

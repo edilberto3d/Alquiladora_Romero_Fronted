@@ -36,6 +36,7 @@ const Login = () => {
     useEffect(() => {
       const fetchCsrfToken = async () => {
         try {
+          //Extraemos el token
           const response = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/get-csrf-token", {
             withCredentials: true, 
           });
@@ -72,43 +73,120 @@ const Login = () => {
     }
   };
 
-  //================================Enviar datos a back=================================================
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setErrorMessage("");
+
+  //=======================================================================
+  //Obtenemos el tipo de dispositivo
+  const getDeviceType = () => {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
     
-    if (isBlocked) {
-      setErrorMessage("Cuenta bloqueada. Espera 10 minutos.");
-      return;
+    if (/windows phone/i.test(userAgent)) {
+      return "Windows Phone";
     }
-
-    if (!correo.trim() || !contrasena.trim()) {
-      setErrorMessage("Completa todos los campos");
-      return;
+    if (/android/i.test(userAgent)) {
+      return "Android";
     }
-
-    if (!captchaValid) {
-      setErrorMessage("Completa el captcha");
-      return;
+    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+      return "iOS";
     }
+    if (/Windows NT/.test(userAgent)) {
+      return "Windows";
+    }
+    return "Unknown";
+  };
 
+  //=====================================================================AUDITORIA DE LOGUEO=========
+  const registrarAuditoria = async (usuario, correo, accion, dispositivo, detalles) => {
+    
+    const fecha_hora = new Date().toISOString();
+    const ip = await obtenerIPUsuario(); 
+  
     try {
-      setIsLoading(true);
-      // Hacemos una solicitud POST
-      const response = await axios.post(
-        "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/login",
+      await axios.post(
+        "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/auditoria",
         {
-          email: correo,
-        contrasena: contrasena,
-        tokenMFA : mfaToken,
-          
+          usuario,
+          correo,
+          accion,
+          dispositivo,
+          ip,
+          fecha_hora,
+          detalles,
         },
         {
           headers: {
             "X-CSRF-Token": csrfToken, 
           },
           withCredentials: true, 
-          timeout: 10000,
+          timeout: 30000,
+        }
+      );
+    } catch (error) {
+      console.error("Error al enviar datos de auditoría:", error);
+    }
+  };
+  
+  //======================================================================================
+  // Función para obtener la IP del usuario
+  const obtenerIPUsuario = async () => {
+    try {
+      const response = await axios.get("https://api64.ipify.org?format=json");
+      return response.data.ip;
+    } catch (error) {
+      console.error("Error al obtener la IP del usuario:", error);
+      return "Desconocido";
+    }
+  };
+  
+
+
+
+
+  //================================Enviar datos a back=================================================
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMessage("");
+    //Obtenemos el tipo de dispositivo
+    const deviceType = getDeviceType();
+    //Obtenemos el tiempo
+    const deviceTime = new Date().toISOString();
+    
+    if (isBlocked) {
+      setErrorMessage("Cuenta bloqueada. Espera 10 minutos.");
+      await registrarAuditoria("Desconocido", correo, "Intento fallido: cuenta bloqueada", deviceType, "Cuenta bloqueada por múltiples intentos");
+      return;
+    }
+
+    if (!correo.trim() || !contrasena.trim()) {
+      setErrorMessage("Completa todos los campos");
+      await registrarAuditoria("Desconocido", correo, "Intento fallido: campos vacíos", deviceType, "Campos de inicio de sesión incompletos");
+      return;
+    }
+
+    if (!captchaValid) {
+      setErrorMessage("Completa el captcha");
+      await registrarAuditoria("Desconocido", correo, "Intento fallido: CAPTCHA no completado", deviceType, "CAPTCHA no completado por el usuario");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      // Hacemos una solicitud POST
+     
+      const response = await axios.post(
+        "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/login",
+        {
+        email: correo,
+        contrasena: contrasena,
+        tokenMFA : mfaToken,
+        clientTimestamp: deviceTime,
+        deviceType: deviceType 
+        },
+        {
+          headers: {
+            "X-CSRF-Token": csrfToken, 
+          },
+          withCredentials: true, 
+          timeout: 30000,
         }
       );
       const user = response.data?.user;
@@ -116,6 +194,7 @@ const Login = () => {
       setUsuarioC(user);
       if (response.data.mfaRequired) {
         setMfaRequired(true);
+        await registrarAuditoria(user ? user.nombre : "Desconocido", correo, "MFA requerido", deviceType, "Autenticación multifactor requerida");
         return;
       }
 
@@ -123,6 +202,7 @@ const Login = () => {
         console.log("Usuario obtenido:", user);
         setUser({ id: user.idUsuarios, nombre: user.nombre, rol: user.rol });
         setIsLoggedIn(true);
+        await registrarAuditoria(user.nombre, correo, "Inicio de sesión exitoso", deviceType, "Usuario autenticado correctamente");
         
         // Redirigir según el rol del usuario
         if (user.rol === "Administrador") {
@@ -164,24 +244,49 @@ const Login = () => {
       }
     
     } catch (error) {
-      console.error("Error durante el login:", error);
 
+      console.error("Error durante el login:", error);
+  
+      // Manejo de errores
       if (error.code === "ECONNABORTED") {
+        console.error("Error durante el login:",error.code);
         setErrorMessage("La solicitud tardó demasiado. Inténtalo de nuevo.");
+        await registrarAuditoria("Desconocido", correo, "Error: Tiempo de solicitud excedido", deviceType, "La solicitud de inicio de sesión tardó demasiado");
+      
       } else if (error.response) {
-        if (error.response.status === 403) {
-          setIsBlocked(true);
-          setErrorMessage("Dispositivo bloqueado. Por favor, espera 10 minutos.");
-        } else if (error.response.status === 401) {
-          setErrorMessage("Credenciales incorrectos.");
-        } else {
-          setErrorMessage("Credenciales incorrectos.");
+        const status = error.response.status;
+        const serverMessage = error.response.data.message || "Error desconocido.";
+  
+        switch (status) {
+          case 400:
+            setErrorMessage(serverMessage);
+            await registrarAuditoria("Desconocido", correo, `Error 400: ${serverMessage}`, deviceType, "Solicitud inválida");
+            break;
+          case 401:
+            setErrorMessage(serverMessage);
+            await registrarAuditoria("Desconocido", correo, `Error 401: ${serverMessage}`, deviceType, "Credenciales incorrectas o autenticación requerida");
+            break;
+          case 403:
+            setIsBlocked(true);
+           
+           setErrorMessage(serverMessage);
+          
+            await registrarAuditoria("Desconocido", correo, `Error 403: ${serverMessage}`, deviceType, "Acceso denegado o dispositivo bloqueado");
+            break;
+          case 500:
+            setErrorMessage("Error del servidor. Por favor, intenta más tarde.");
+            await registrarAuditoria("Desconocido", correo, "Error 500: Error interno del servidor", deviceType, "Error en el servidor");
+            break;
+          default:
+            setErrorMessage(serverMessage);
+            await registrarAuditoria("Desconocido", correo, `Error ${status}: ${serverMessage}`, deviceType, "Error desconocido");
+            break;
         }
       } else {
         setErrorMessage("Error de conexión. Inténtalo de nuevo más tarde.");
+        await registrarAuditoria("Desconocido", correo, "Error de conexión", deviceType, "No se pudo conectar al servidor");
       }
-
-      // Restablecemos el captcha
+  
       if (recaptchaRef.current) {
         recaptchaRef.current.reset();
         setCaptchaValid(false);
@@ -195,10 +300,13 @@ const Login = () => {
  // Función para enviar el código MFA
  const handleMfaSubmit = async (e) => {
   e.preventDefault();
-  setErrorMessage(""); 
+  setErrorMessage("");
+  const deviceType = getDeviceType();
+  const deviceTime = new Date().toISOString(); 
   
   try {
     setIsLoading(true);
+  
 
     // Realizamos la solicitud al backend para verificar el código MFA
     const response = await axios.post(
@@ -206,14 +314,16 @@ const Login = () => {
       {
         email: correo,
         contrasena: contrasena,
-        tokenMFA: mfaToken 
+        tokenMFA: mfaToken ,
+        clientTimestamp: deviceTime,
+        deviceType: deviceType
       },
       {
         headers: {
           "X-CSRF-Token": csrfToken, 
         },
         withCredentials: true,
-        timeout: 10000,
+        timeout: 30000,
       }
     );
 
@@ -223,7 +333,7 @@ const Login = () => {
     if (user) {
       // Guardamos el usuario en el contexto o en el estado global
       setUser({ id: user.idUsuarios, nombre: user.nombre, rol: user.rol });
-      setIsLoggedIn(true); 
+      setIsLoggedIn(true);    
 
       // Redirigimos según el rol del usuario
       if (user.rol === "Administrador") {
@@ -318,7 +428,7 @@ const Login = () => {
 
 
      <div
-        className={`login-box ${isBlocked || isLoading ? "disabled" : ""}`}
+        className={`login-box ${isBlocked || isLoading ? "disabled" : ""}}`}
         style={{
           backgroundColor: theme === "light" ? "#fff" : "#444",
           color: theme === "light" ? "#000" : "#fff",

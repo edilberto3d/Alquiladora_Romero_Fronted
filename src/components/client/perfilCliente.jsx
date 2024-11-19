@@ -22,7 +22,9 @@ import {
   Modal,
   Button,
   useTheme,
+  ListItemIcon,
 } from "@mui/material";
+import ComputerIcon from "@mui/icons-material/Computer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
@@ -38,7 +40,17 @@ import { validateName, validatePhone } from "./dialogos/validalaciones";
 import EditableInput from "./dialogos/EditableInput";
 import CambiarContrasenaModal from "./change/cambiarpass";
 import MFAComponent from "./Mfa/mfa";
-import { ThemeContext } from "../shared/layaouts/ThemeContext";
+import "primereact/resources/themes/saga-blue/theme.css";
+import "primereact/resources/primereact.min.css";
+
+import {
+  faWindows,
+  faAndroid,
+  faLinux,
+  faApple,
+} from "@fortawesome/free-brands-svg-icons";
+import PhoneIphoneIcon from "@mui/icons-material/PhoneIphone";
+import TabletMacIcon from "@mui/icons-material/TabletMac";
 
 const PerfilUsuarioPrime = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -57,8 +69,9 @@ const PerfilUsuarioPrime = () => {
   const [openMfaModal, setOpenMfaModal] = useState(false);
   const theme = useTheme();
   const [activo, setActivo] = useState(false);
-
+  const [sessions, setSessions] = useState([]);
   const [openModal, setOpenModal] = useState(false);
+  
 
   // Obtenemos los datos del usuario desde el backend
 
@@ -122,7 +135,7 @@ const PerfilUsuarioPrime = () => {
   // Función para cerrar el modal
   const handleCloseModal = () => {
     setOpenModal(false);
-    fetchProfileData()
+    fetchProfileData();
   };
 
   //=======================================================================================
@@ -141,14 +154,15 @@ const PerfilUsuarioPrime = () => {
         );
         return;
       }
-      if (!["image/png", "image/jpeg"].includes(file.type)) {
+      if (!["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp", "image/svg+xml"].includes(file.type)) {
         showToast(
           "error",
           "Formato de imagen inválido",
-          "Solo se aceptan PNG y JPG."
+          "Solo se aceptan imágenes en formatos PNG, JPG, JPEG, GIF, WEBP, o SVG."
         );
         return;
       }
+      
       if (file.size > 2 * 1024 * 1024) {
         showToast(
           "error",
@@ -274,6 +288,77 @@ const PerfilUsuarioPrime = () => {
     setOpenMfaModal(false);
   };
 
+  //===================SESIONES=======================================================================
+  const fetchSessions = async () => {
+    console.log("Este es el id de sesiones abiertas", usuariosC.id);
+    try {
+      const response = await axios.post(
+        "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/sesiones",
+        { userId: usuariosC.id },
+        { headers: { "X-CSRF-Token": csrfToken }, withCredentials: true , timeout: 10000 }
+      );
+      setSessions(response.data);
+      console.log("Sesiones abiertas:", response.data);
+    } catch (error) {
+      console.error("Error al obtener las sesiones activas:", error);
+    }
+  };
+
+  const closeAllSessions = async () => {
+    const deviceTime = new Date().toISOString();
+
+    try {
+      await axios.post(
+        "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/cerrar-todas-sesiones",
+        { userId: usuariosC.id, deviceTime },
+        { headers: { "X-CSRF-Token": csrfToken }, withCredentials: true, timeout: 10000 }
+      );
+      setSessions(sessions.filter((session) => session.isCurrent));
+      toast.current.show({
+        severity: "success",
+        summary: "Sesiones cerradas",
+        detail: "Todas las sesiones excepto la actual han sido cerradas.",
+        life: 3000, 
+      });
+    } catch (error) {
+      console.error("Error al cerrar todas las sesiones:", error);
+      toast.current.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Error al cerrar todas las sesiones.",
+        life: 3000,
+      });
+    }
+  };
+
+  useEffect(() => {
+    let intervalId;
+
+    if (usuariosC.id) {
+      fetchSessions(); 
+      intervalId = setInterval(() => {
+        fetchSessions();
+      },100000); 
+    }
+
+    
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [usuariosC]);
+
+  const getDeviceIcon = (deviceType) => {
+    if (deviceType === "Windows") return <FontAwesomeIcon icon={faWindows} />;
+    if (deviceType === "Android") return <FontAwesomeIcon icon={faAndroid} />;
+    if (deviceType === "Linux") return <FontAwesomeIcon icon={faLinux} />;
+    if (deviceType === "Mac") return <FontAwesomeIcon icon={faApple} />;
+    if (deviceType === "iOS") return <PhoneIphoneIcon />;
+    if (deviceType === "iPad") return <TabletMacIcon />;
+    return <ComputerIcon />;
+  };
+
   //==========================================================================================
 
   // Renderizamos el contenido solo si ya tenemos los datos cargados
@@ -290,6 +375,7 @@ const PerfilUsuarioPrime = () => {
 
   return (
     <>
+     <Toast ref={toast} position="top-right" />
       <Toast ref={toast} position="top-right" />
       {isBlocked && (
         <>
@@ -437,7 +523,7 @@ const PerfilUsuarioPrime = () => {
                       <TextField
                         label="Contraseña"
                         type="password"
-                        value="********"
+                        value="************"
                         fullWidth
                         InputProps={{
                           readOnly: true,
@@ -460,11 +546,11 @@ const PerfilUsuarioPrime = () => {
                           p: 2,
                           borderRadius: 2,
                           backgroundColor:
-                            theme === "light" ? "#f5f5f5" : "#424242", 
+                            theme === "light" ? "#f5f5f5" : "#424242",
                           boxShadow: 1,
                           textAlign: "left",
                           mb: 2,
-                          color: theme === "light" ? "#000" : "#fff", 
+                          color: theme === "light" ? "#000" : "#fff",
                         }}
                       >
                         <Typography variant="h6" sx={{ mb: 1 }}>
@@ -477,7 +563,7 @@ const PerfilUsuarioPrime = () => {
                         </Typography>
                         <Button
                           variant="contained"
-                          color={activo ?  "secondary": "primary"}
+                          color={activo ? "secondary" : "primary"}
                           onClick={handleOpenMfaModal}
                           sx={{ width: "auto", minWidth: "200px" }}
                         >
@@ -511,10 +597,7 @@ const PerfilUsuarioPrime = () => {
                           >
                             Configuración de Autenticación Multifactor
                           </Typography>
-                          <MFAComponent
-                            userId={usuariosC.id}
-
-                          />
+                          <MFAComponent userId={usuariosC.id}  setActivo={setActivo}/>
 
                           <Button
                             onClick={handleCloseMfaModal}
@@ -531,31 +614,90 @@ const PerfilUsuarioPrime = () => {
 
                     {/* Lista de Sesiones Abiertas */}
                     <Grid item xs={12} md={8}>
-                      <Typography variant="h6">Sesiones Abiertas</Typography>
-                      <Typography variant="body2">
-                        Revisa dónde tienes la sesión abierta. Puedes cerrar
-                        sesiones innecesarias.
-                      </Typography>
-                      <List>
-                        {Array.isArray(profileData.sessions) &&
-                        profileData.sessions.length > 0 ? (
-                          profileData.sessions.map((session, index) => (
-                            <ListItem key={index}>
-                              <ListItemText
-                                primary={`Dispositivo: ${session.device}`}
-                                secondary={`Ubicación: ${session.location} - Última Actividad: ${session.lastActive}`}
-                              />
-                              <IconButton>
-                                <FontAwesomeIcon icon={faSignOutAlt} />
-                              </IconButton>
-                            </ListItem>
-                          ))
-                        ) : (
-                          <Typography variant="body2">
-                            No hay sesiones abiertas.
+                      <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+                        <Typography variant="h6" gutterBottom>
+                          Sesiones Abiertas
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 2 }}>
+                          Revisa dónde tienes la sesión abierta. Puedes cerrar
+                          sesiones innecesarias.
+                        </Typography>
+
+                        <List>
+                          {/* Sesión actual */}
+                          <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
+                            Sesión Actual
                           </Typography>
-                        )}
-                      </List>
+                          {sessions
+                            .filter((session) => session.isCurrent)
+                            .map((session, index) => (
+                              <ListItem key={`current-${index}`}>
+                                <ListItemIcon>
+                                  {getDeviceIcon(session.tipoDispositivo)}
+                                </ListItemIcon>
+                                <ListItemText
+                                  primary={`Dispositivo: ${session.tipoDispositivo}`}
+                                  secondary={`IP: ${
+                                    session.direccionIP
+                                  } `}
+                                />
+                              </ListItem>
+                            ))}
+
+                          <Divider sx={{ my: 2 }} />
+
+                          {/* Otras sesiones activas */}
+                          <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                            Otras Sesiones Activas
+                          </Typography>
+                          {sessions.filter((session) => !session.isCurrent)
+                            .length > 0 ? (
+                            sessions
+                              .filter((session) => !session.isCurrent)
+                              .map((session, index) => (
+                                <ListItem key={`other-${index}`}>
+                                  <ListItemIcon>
+                                    {getDeviceIcon(session.tipoDispositivo)}
+                                  </ListItemIcon>
+                                  <ListItemText
+                                    primary={`Dispositivo: ${session.tipoDispositivo}`}
+                                    secondary={`IP: ${
+                                      session.direccionIP
+                                    } `}
+                                  />
+                                </ListItem>
+                              ))
+                          ) : (
+                            <Typography
+                              variant="body2"
+                              sx={{ ml: 2, color: "text.secondary" }}
+                            >
+                              No hay otras sesiones activas.
+                            </Typography>
+                          )}
+
+                          {/* Botón para cerrar todas las demás sesiones */}
+                          {sessions.filter((session) => !session.isCurrent)
+                            .length > 0 && (
+                            <Button
+                              variant="contained"
+                              color="error"
+                              onClick={closeAllSessions}
+                              startIcon={
+                                <FontAwesomeIcon icon={faSignOutAlt} />
+                              }
+                              sx={{
+                                mt: 2,
+                                textTransform: "none",
+                                fontSize: "14px",
+                                alignSelf: "flex-start",
+                              }}
+                            >
+                              Cerrar otras sesiones
+                            </Button>
+                          )}
+                        </List>
+                      </Paper>
                     </Grid>
                   </Grid>
                 </Box>

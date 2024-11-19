@@ -294,250 +294,232 @@ const Registro = ({ guardarCorreo }) => {
 
   return (
     <div className="registro-container1">
+  <Typography
+    variant="h5"
+    className="login-title"
+    textAlign="center"
+    marginBottom="15px"
+  >
+    Paso 4: Completa tu registro
+  </Typography>
+
+  <Alert
+    severity="info"
+    sx={{ marginBottom: "15px", textAlign: "left", fontSize: "0.875rem" }}
+  >
+    El número de teléfono proporcionado será utilizado para recuperar o
+    cambiar la contraseña. Asegúrate de que sea un número real y accesible.
+  </Alert>
+
+  <Box
+    component="form"
+    onSubmit={handleSubmit}
+    sx={{ display: "flex", flexDirection: "column", gap: 2, maxWidth: '600px', margin: '0 auto' }}
+    className="registro-form1"
+  >
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 1.5,
+        width: "100%",
+      }}
+    >
+      <TextField
+        label="Nombre *"
+        name="nombre"
+        value={formData.nombre}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        required
+        fullWidth
+        error={!!errors.nombre && touchedFields.nombre}
+        helperText={touchedFields.nombre && errors.nombre}
+      />
+      <TextField
+        label="Apellido Paterno *"
+        name="apellidoPaterno"
+        value={formData.apellidoPaterno}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        required
+        fullWidth
+        error={!!errors.apellidoPaterno && touchedFields.apellidoPaterno}
+        helperText={touchedFields.apellidoPaterno && errors.apellidoPaterno}
+      />
+      <TextField
+        label="Apellido Materno"
+        name="apellidoMaterno"
+        value={formData.apellidoMaterno}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        fullWidth
+        error={!!errors.apellidoMaterno && touchedFields.apellidoMaterno}
+        helperText={touchedFields.apellidoMaterno && errors.apellidoMaterno}
+      />
+      <TextField
+        label="Teléfono *"
+        name="telefono"
+        value={formData.telefono}
+        onChange={(e) => {
+          const onlyNums = e.target.value.replace(/[^0-9]/g, "");
+          setFormData({
+            ...formData,
+            telefono: onlyNums.slice(0, 10),
+          });
+        }}
+        onBlur={handleBlur}
+        required
+        fullWidth
+        type="tel"
+        inputProps={{
+          maxLength: 10,
+          pattern: "[0-9]{10}",
+          title: "Ingresa un número de teléfono válido de 10 dígitos",
+        }}
+        error={!!errors.telefono && touchedFields.telefono}
+        helperText={touchedFields.telefono && errors.telefono}
+      />
+      <TextField
+        label="Contraseña *"
+        name="contrasena"
+        type={showPassword ? "text" : "password"}
+        value={formData.contrasena}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        required
+        fullWidth
+        error={!!errors.contrasena && touchedFields.contrasena}
+        helperText={touchedFields.contrasena && errors.contrasena}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                onClick={() => setShowPassword(!showPassword)}
+                edge="end"
+              >
+                <FontAwesomeIcon icon={showPassword ? faEye : faEyeSlash} />
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
+      <TextField
+        label="Confirmar Contraseña *"
+        name="confirmarContrasena"
+        type={showConfirmPassword ? "text" : "password"}
+        value={formData.confirmarContrasena}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        required
+        fullWidth
+        error={
+          !!errors.confirmarContrasena && touchedFields.confirmarContrasena
+        }
+        helperText={
+          touchedFields.confirmarContrasena && errors.confirmarContrasena
+        }
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                edge="end"
+              >
+                <FontAwesomeIcon
+                  icon={showConfirmPassword ? faEye : faEyeSlash}
+                />
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
+    </Box>
+
+    {/* Mostrar si la contraseña está comprometida */}
+    {isCompromised && (
       <Typography
-        variant="h5"
-        className="login-title"
-        textAlign="center"
-        marginBottom="15px"
+        sx={{
+          color: "red",
+          fontSize: "0.8rem",
+          fontStyle: "italic",
+        }}
       >
-        Paso 4: Completa tu registro
+        Error: utiliza otra contraseña
       </Typography>
+    )}
 
-      <Alert
-        severity="info"
-        sx={{ marginBottom: "15px", textAlign: "left", fontSize: "0.875rem" }}
-      >
-        El número de teléfono proporcionado será utilizado para recuperar o
-        cambiar la contraseña. Asegúrate de que sea un número real y accesible.
-      </Alert>
-
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
-        sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-        className="registro-form1"
-      >
-        <Box
-          sx={{
-            display: "grid",
-            gap: 1.5,
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-            width: "100%",
-          }}
-        >
-          <TextField
-            label="Nombre *"
-            name="nombre"
-            value={formData.nombre}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            required
-            fullWidth
-            error={!!errors.nombre && touchedFields.nombre}
-            helperText={touchedFields.nombre && errors.nombre}
-          />
-          <TextField
-            label="Apellido Paterno *"
-            name="apellidoPaterno"
-            value={formData.apellidoPaterno}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            required
-            fullWidth
-            error={!!errors.apellidoPaterno && touchedFields.apellidoPaterno}
-            helperText={touchedFields.apellidoPaterno && errors.apellidoPaterno}
-          />
-        </Box>
-
-        <Box
-          sx={{
-            display: "grid",
-            gap: 1.5,
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-            width: "100%",
-          }}
-        >
-          <TextField
-            label="Apellido Materno"
-            name="apellidoMaterno"
-            value={formData.apellidoMaterno}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            fullWidth
-            error={!!errors.apellidoMaterno && touchedFields.apellidoMaterno}
-            helperText={touchedFields.apellidoMaterno && errors.apellidoMaterno}
-          />
-          <TextField
-            label="Teléfono *"
-            name="telefono"
-            value={formData.telefono}
-            onChange={(e) => {
-              const onlyNums = e.target.value.replace(/[^0-9]/g, "");
-              setFormData({
-                ...formData,
-                telefono: onlyNums.slice(0, 10),
-              });
-            }}
-            onBlur={handleBlur}
-            required
-            fullWidth
-            type="tel"
-            inputProps={{
-              maxLength: 10,
-              pattern: "[0-9]{10}",
-              title: "Ingresa un número de teléfono válido de 10 dígitos",
-            }}
-            error={!!errors.telefono && touchedFields.telefono}
-            helperText={touchedFields.telefono && errors.telefono}
-          />
-        </Box>
-
-        <Box
-          sx={{
-            display: "grid",
-            gap: 1.5,
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-            width: "100%",
-          }}
-        >
-          <TextField
-            label="Contraseña *"
-            name="contrasena"
-            type={showPassword ? "text" : "password"}
-            value={formData.contrasena}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            required
-            fullWidth
-            error={!!errors.contrasena && touchedFields.contrasena}
-            helperText={touchedFields.contrasena && errors.contrasena}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowPassword(!showPassword)}
-                    edge="end"
-                  >
-                    <FontAwesomeIcon icon={showPassword ? faEye : faEyeSlash} />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-          <TextField
-            label="Confirmar Contraseña *"
-            name="confirmarContrasena"
-            type={showConfirmPassword ? "text" : "password"}
-            value={formData.confirmarContrasena}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            required
-            fullWidth
-            error={
-              !!errors.confirmarContrasena && touchedFields.confirmarContrasena
-            }
-            helperText={
-              touchedFields.confirmarContrasena && errors.confirmarContrasena
-            }
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    edge="end"
-                  >
-                    <FontAwesomeIcon
-                      icon={showConfirmPassword ? faEye : faEyeSlash}
-                    />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Box>
-        {/* Mostrar si la contraseña está comprometida */}
-        {isCompromised && (
+    {/* Medidor de seguridad de la contraseña */}
+    {formData.contrasena && (
+      <Box sx={{ marginBottom: "1px", textAlign: "center" }}>
+        {passwordStrengthScore < 4 && (
           <Typography
             sx={{
               color: "red",
               fontSize: "0.8rem",
               fontStyle: "italic",
+              marginBottom: "8px",
             }}
           >
-            Error Utiliza otra contraseña
+            La contraseña debe ser "fuerte" para poder registrarte.
           </Typography>
         )}
-
-        {/* Medidor de seguridad de la contraseña */}
-        {formData.contrasena && (
-          <Box sx={{ marginBottom: "1px", textAlign: "center" }}>
-            {passwordStrengthScore < 4 && (
-              <Typography
-                sx={{
-                  color: "red",
-                  fontSize: "0.8rem",
-                  fontStyle: "italic",
-                  marginBottom: "8px",
-                }}
-              >
-                La contraseña debe ser "fuerte" para poder registrarte.
-              </Typography>
-            )}
-            <Typography
-              sx={{
-                fontWeight: "bold",
-                fontSize: "0.9rem",
-                marginBottom: "8px",
-                color: "#333",
-              }}
-            >
-              Seguridad de la contraseña:
-              <span
-                style={{
-                  color: getPasswordStrengthColor(passwordStrengthScore),
-                  marginLeft: "6px",
-                }}
-              >
-                {getPasswordStrengthText(passwordStrengthScore)}
-              </span>
-            </Typography>
-            <Box
-              sx={{
-                position: "relative",
-                height: "8px",
-                borderRadius: "8px",
-                backgroundColor: "#f0f0f0",
-                overflow: "hidden",
-              }}
-            >
-              <Box
-                sx={{
-                  position: "absolute",
-                  height: "100%",
-                  width: `${(passwordStrengthScore / 4) * 100}%`,
-                  transition: "width 0.4s ease",
-                  backgroundImage: `linear-gradient(to right, ${getPasswordStrengthColor(
-                    passwordStrengthScore
-                  )}, #f8f9fa)`,
-                  borderRadius: "8px",
-                }}
-              />
-            </Box>
-          </Box>
-        )}
-
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          fullWidth
-          disabled={!isFormValid}
-          sx={{ padding: "10px", fontSize: "0.9rem" }}
+        <Typography
+          sx={{
+            fontWeight: "bold",
+            fontSize: "0.9rem",
+            marginBottom: "8px",
+            color: "#333",
+          }}
         >
-          Completar Registro
-        </Button>
+          Seguridad de la contraseña:
+          <span
+            style={{
+              color: getPasswordStrengthColor(passwordStrengthScore),
+              marginLeft: "6px",
+            }}
+          >
+            {getPasswordStrengthText(passwordStrengthScore)}
+          </span>
+        </Typography>
+        <Box
+          sx={{
+            position: "relative",
+            height: "8px",
+            borderRadius: "8px",
+            backgroundColor: "#f0f0f0",
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              height: "100%",
+              width: `${(passwordStrengthScore / 4) * 100}%`,
+              transition: "width 0.4s ease",
+              backgroundImage: `linear-gradient(to right, ${getPasswordStrengthColor(
+                passwordStrengthScore
+              )}, #f8f9fa)`,
+              borderRadius: "8px",
+            }}
+          />
+        </Box>
       </Box>
-    </div>
+    )}
+
+    <Button
+      type="submit"
+      variant="contained"
+      color="primary"
+      fullWidth
+      disabled={!isFormValid}
+      sx={{ padding: "10px", fontSize: "0.9rem" }}
+    >
+      Completar Registro
+    </Button>
+  </Box>
+</div>
+
   );
 };
 

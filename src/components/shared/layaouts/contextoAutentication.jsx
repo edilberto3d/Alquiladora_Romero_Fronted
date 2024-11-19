@@ -4,7 +4,6 @@ import { useAuth } from './AuthContext';
 
 const RutaPrivada = ({ children, rolesPermitidos }) => {
   const { user, isLoading } = useAuth();
-  console.log("Este es lo que se obtine de user rutas privadas", user )
   const location = useLocation();
 
   if (isLoading) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext,useRef } from "react";
 import {
   AppBar,
   Toolbar,
@@ -39,21 +39,19 @@ import "react-toastify/dist/ReactToastify.css";
 
 const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { user, setUser, checkAuth, isLoading } = useAuth();
+  const { user, setUser, checkAuth, isLoading ,logout } = useAuth();
   const [showHeader, setShowHeader] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const { theme, toggleTheme } = useContext(ThemeContext);
   const [isLoggedIn, setIsLoggedIn] = useState(!!user);
+  const inactivityTimer = useRef(null);
+  const countdownTimer = useRef(null);
 
   const [datosEmpresa, setDatosEmpresa] = useState([]);
   const navigate = useNavigate();
   //cONSTANTES DE INACTIVIDAD
-  const [timeLeft, setTimeLeft] = useState(10);
-  const [showCountdown, setShowCountdown] = useState(false);
-  const INACTIVITY_LIMIT = 1 * 60 * 1000; //1o mnts
+  const INACTIVITY_LIMIT = 10 * 60 * 1000;
   const ALERT_TIMEOUT = 10000;
-  let inactivityTimer = null;
-  let countdownTimer = null;
   const location = useLocation();
   const [csrfToken, setCsrfToken] = useState("");
 
@@ -107,97 +105,50 @@ const Header = () => {
     }
   }, [user, isLoading, location, navigate]);
 
-  // Verificar autenticación al cargar la página
-  useEffect(() => {
-    const verifyAuth = async () => {
-      const isAuthenticated = await checkAuth();
-      setIsLoggedIn(isAuthenticated);
-      if (!isAuthenticated && user) {
-        // Si el usuario no está autenticado pero existía un usuario en el estado, significa que la sesión expiró
-        await handleSessionExpiration();
-      }
-    };
-    verifyAuth();
-  }, []);
+
+
+
 
   // Función para manejar la expiración de sesión
-  const handleSessionExpiration = async () => {
-    try {
-      await axios.post(
-        "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/session-expired",
-        { userId: user.idUsuario },
-        {
-          withCredentials: true,
-          headers: {
-            "X-CSRF-Token": csrfToken,
-          },
-        }
-      );
-      setUser(null);
-      setIsLoggedIn(false);
-      navigate("/login");
-    } catch (error) {
-      console.error("Error al registrar la expiración de sesión:", error);
-    }
-  };
-
+ 
 
   //==================================================================================================================================
   //fUNCION PARA RESETEAR EL TEMPORIZADOR DE INACTIVIDAD
   const resetInactivityTimer = () => {
     if (isLoggedIn) {
-      console.log("Reseteando el temporizador de inactividad...");
-      clearTimeout(inactivityTimer);
-      inactivityTimer = setTimeout(() => {
+      clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = setTimeout(() => {
         showInactivityAlert();
       }, INACTIVITY_LIMIT);
-    }
-  };
-  // Función que maneja el cierre de sesión por inactividad
-  const handleInactivityLogout = async () => {
-    try {
-      await axios.post(
-        "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/Delete/login",
-        {},
-        {
-          withCredentials: true,
-          headers: {
-            "X-CSRF-Token": csrfToken,
-          },
-        }
-      );
-      setIsLoggedIn(false);
-     
-      setUser(null);
-      navigate("/login");
-      setShowCountdown(false);
-      
-    } catch (error) {
-     
     }
   };
 
   // Función que muestra la alerta de inactividad
   const showInactivityAlert = () => {
-    let timeLeft = 10;
+    let timeLeft = ALERT_TIMEOUT / 1000;
     Swal.fire({
       title: "Inactividad detectada",
       html: `Tu sesión se cerrará en <strong>${timeLeft}</strong> segundos debido a inactividad.`,
       icon: "warning",
-
+      showCancelButton: true,
+      confirmButtonText: "Cerrar sesión ahora",
+      cancelButtonText: "Continuar sesión",
       timer: ALERT_TIMEOUT,
       timerProgressBar: true,
       didOpen: () => {
-        Swal.showLoading();
-        countdownTimer = setInterval(() => {
+        countdownTimer.current = setInterval(() => {
           timeLeft--;
-          Swal.getHtmlContainer().querySelector("strong").textContent =
-            timeLeft;
+          const content = Swal.getHtmlContainer();
+          if (content) {
+            const strongEl = content.querySelector("strong");
+            if (strongEl) {
+              strongEl.textContent = timeLeft;
+            }
+          }
         }, 1000);
       },
       willClose: () => {
-        clearInterval(countdownTimer);
-        handleInactivityLogout();
+        clearInterval(countdownTimer.current);
       },
       customClass: {
         popup: "small-swal",
@@ -206,29 +157,32 @@ const Header = () => {
       },
       width: "300px",
     }).then((result) => {
-      if (result.dismiss === Swal.DismissReason.timer) {
-        handleInactivityLogout();
+      if (result.dismiss === Swal.DismissReason.timer || result.isConfirmed) {
+        logout();
+        navigate('/login');
         console.log("Sesión cerrada por inactividad");
+      } else {
+        resetInactivityTimer();
       }
     });
   };
-
-  // useEffect que maneja los eventos de actividad (movimiento del ratón, teclado)
+  
   useEffect(() => {
     if (isLoggedIn) {
       console.log("Comenzando a escuchar eventos de inactividad...");
       window.addEventListener("mousemove", resetInactivityTimer);
       window.addEventListener("keypress", resetInactivityTimer);
       resetInactivityTimer();
-
+  
       return () => {
-        clearTimeout(inactivityTimer);
+        clearTimeout(inactivityTimer.current);
+        clearInterval(countdownTimer.current);
         window.removeEventListener("mousemove", resetInactivityTimer);
         window.removeEventListener("keypress", resetInactivityTimer);
       };
     }
   }, [isLoggedIn]);
-
+  
   ///DATOS DE LA EMPRESA
   useEffect(() => {
     const fetchDatosEmpresa = async () => {
@@ -273,8 +227,8 @@ const Header = () => {
   const menuItems = [
     { text: "Inicio", href: "/" },
     { text: "Catálogo", href: "/#" },
-    { text: "Servicios", href: "/#" },
-    { text: "Contacto", href: "/#" },
+    // { text: "Servicios", href: "/#" },
+    // { text: "Contacto", href: "/#" },
     { text: "Cotiza Ahora", href: "/#" },
   ];
 

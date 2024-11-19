@@ -12,8 +12,8 @@ export const TokenModalP = () => {
   const [tokens, setTokens] = useState(Array(6).fill(""));
   const [errorMessage, setErrorMessage] = useState("");
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(900); // 900 segundos = 15 minutos
-  const inputRefs = useRef([]); // Referencias a los campos de texto
+  const [timeLeft, setTimeLeft] = useState(600); 
+  const inputRefs = useRef([]); 
   const [csrfToken, setCsrfToken] = useState(""); 
   const location = useLocation();
   const { idUsuario, tokenValido } = location.state || {};
@@ -27,7 +27,7 @@ export const TokenModalP = () => {
   useEffect(() => {
     const fetchCsrfToken = async () => {
       try {
-        const response = await axios.get("http://localhost:3001/api/get-csrf-token", { withCredentials: true });
+        const response = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/get-csrf-token", { withCredentials: true });
         setCsrfToken(response.data.csrfToken); // Almacenar el token CSRF
       } catch (error) {
         console.error("Error al obtener el token CSRF:", error);
@@ -80,7 +80,7 @@ const handleClose = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3001/api/usuarios/validarToken/contrasena", 
+        "https://alquiladora-romero-backed-1.onrender.com/api/usuarios/validarToken/contrasena", 
         { idUsuario: idUsuario, token: tokenValido },
         {
           headers: {
@@ -236,7 +236,7 @@ const handleClose = () => {
         </Button>
 
         <Typography sx={{ textAlign: 'center', marginTop: '8px', fontSize: '0.75rem', color: '#FF5722' }}>
-          El token es válido por 15 minutos. {timeLeft === 0 && 'El token ha expirado.'}
+          El token es válido por 10 minutos. {timeLeft === 0 && 'El token ha expirado.'}
         </Typography>
       </Box>
     </Box>

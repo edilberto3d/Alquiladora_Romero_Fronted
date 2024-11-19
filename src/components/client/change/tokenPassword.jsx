@@ -12,7 +12,7 @@ export const TokenModal = () => {
   const [tokens, setTokens] = useState(Array(6).fill(""));
   const [errorMessage, setErrorMessage] = useState("");
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(900); // 900 segundos = 15 minutos
+  const [timeLeft, setTimeLeft] = useState(600); 
   const inputRefs = useRef([]); // Referencias a los campos de texto
   const [csrfToken, setCsrfToken] = useState(""); 
   const location = useLocation();
@@ -236,7 +236,7 @@ const handleClose = () => {
         </Button>
 
         <Typography sx={{ textAlign: 'center', marginTop: '8px', fontSize: '0.75rem', color: '#FF5722' }}>
-          El token es válido por 15 minutos. {timeLeft === 0 && 'El token ha expirado.'}
+          El token es válido por 10 minutos. {timeLeft === 0 && 'El token ha expirado.'}
         </Typography>
       </Box>
     </Box>

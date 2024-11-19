@@ -1,11 +1,8 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faFacebook,
-  faInstagram,
-  faTwitter,
-} from "@fortawesome/free-brands-svg-icons";
+import { faFacebook, faInstagram, faTwitter } from "@fortawesome/free-brands-svg-icons";
+import { faGlobe } from "@fortawesome/free-solid-svg-icons"; // Importar desde free-solid-svg-icons
 import {
   Box,
   Typography,
@@ -23,15 +20,14 @@ import { useAuth } from "../../shared/layaouts/AuthContext";
 const PiePagina = () => {
   const { theme } = useContext(ThemeContext);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const { user, setUser, checkAuth, isLoading } = useAuth();
-  const [csrfToken, setCsrfToken] = useState("");
+  const { user } = useAuth();
   const [empresa, setEmpresa] = useState({
     direccion: "",
     telefono: "",
     redes_sociales: {
       facebook: "",
       instagram: "",
-      twitter: "",
+      web: ""
     },
   });
 
@@ -41,19 +37,28 @@ const PiePagina = () => {
         const response = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/empresa", {
           withCredentials: true,
         });
-        setEmpresa(response.data);
+        
+        const empresaData = response.data;
+        
+        // Parseamos la cadena de redes sociales
+        const redesSocialesParsed = JSON.parse(empresaData.redes_sociales);
+
+        // Establecemos los enlaces específicos en el estado de `empresa`
+        setEmpresa({
+          direccion: empresaData.direccion,
+          telefono: empresaData.telefono,
+          redes_sociales: {
+            facebook: redesSocialesParsed.new_social_1 || "", // Facebook
+            web: redesSocialesParsed.new_social_2 || "", // Página web
+            instagram: "https://www.instagram.com/alquiladoraromero", // Instagram predeterminado
+          }
+        });
       } catch (error) {
         console.error("Error al obtener datos de la empresa:", error);
       }
     };
     fetchEmpresaData();
   }, []);
-
-  const defaultLinks = {
-    facebook: "https://www.facebook.com",
-    instagram: "https://www.instagram.com",
-    twitter: "https://www.twitter.com",
-  };
 
   return (
     <Box
@@ -70,7 +75,6 @@ const PiePagina = () => {
         <Grid item xs={12} md={6}>
           <Box sx={{ width: "100%", height: "100%", position: "relative" }}>
             {!mapLoaded && (
-              // Indicador de carga mientras el mapa no ha cargado
               <Box
                 sx={{
                   position: "absolute",
@@ -89,14 +93,14 @@ const PiePagina = () => {
               </Box>
             )}
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.0199543221065!2d-122.08385168468291!3d37.38605197983002!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x808fb5c1dce9292f%3A0xb7b479b2ba6c5f6b!2sGoogleplex!5e0!3m2!1sen!2sus!4v1638895942395!5m2!1sen!2sus"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.0199543221065!2d-122.08385168468291!3d37.38605197983002!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x808fb5c1dce9292f%3A0xb7b479b2ba6c5f6b!2sGoogleplex!5e0!3m2!1sen!2sus!4v1638895942395!5m2!1sen!2us"
               width="100%"
               height="300px"
               style={{ border: 0 }}
               allowFullScreen=""
               loading="lazy"
               title="Mapa de ubicación"
-              onLoad={() => setMapLoaded(true)} // Actualizamos el estado cuando el mapa ha cargado
+              onLoad={() => setMapLoaded(true)}
               onError={() => {
                 setMapLoaded(true);
                 console.error("Error al cargar el mapa");
@@ -147,7 +151,6 @@ const PiePagina = () => {
               </Typography>
             </AccordionDetails>
           </Accordion>
-          {/* Más preguntas frecuentes */}
         </Grid>
       </Grid>
 
@@ -165,40 +168,19 @@ const PiePagina = () => {
             INFORMACIÓN DE LA EMPRESA
           </Typography>
           <Box>
-            {user && user?.rol ? (
-              <>
-                <Link
-                     to="/cliente/politicas"
-                  style={{
-                    textDecoration: "none",
-                    color: theme === "light" ? "#007bff" : "#4fc3f7",
-                    display: "block",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Políticas y Privacidad
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/politicas"
-                  style={{
-                    textDecoration: "none",
-                    color: theme === "light" ? "#007bff" : "#4fc3f7",
-                    display: "block",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Políticas y Privacidad
-                </Link>
-              </>
-            )}
-
-            
-            {user && user?.rol ? (<>
-              <Link
-              to="/cliente/terminos"
+            <Link
+              to={user?.rol ? "/cliente/politicas" : "/politicas"}
+              style={{
+                textDecoration: "none",
+                color: theme === "light" ? "#007bff" : "#4fc3f7",
+                display: "block",
+                marginBottom: "8px",
+              }}
+            >
+              Políticas y Privacidad
+            </Link>
+            <Link
+              to={user?.rol ? "/cliente/terminos" : "/terminos"}
               style={{
                 textDecoration: "none",
                 color: theme === "light" ? "#007bff" : "#4fc3f7",
@@ -208,43 +190,8 @@ const PiePagina = () => {
             >
               Términos y Condiciones
             </Link>
-            
-            
-            </>):(
-              <>
-               <Link
-              to="/terminos"
-              style={{
-                textDecoration: "none",
-                color: theme === "light" ? "#007bff" : "#4fc3f7",
-                display: "block",
-                marginBottom: "8px",
-              }}
-            >
-              Términos y Condiciones
-            </Link>
-              
-              </>
-            )}
-
-              {user && user?.rol ? (<>
-              <Link
-              to="/cliente/deslin"
-              style={{
-                textDecoration: "none",
-                color: theme === "light" ? "#007bff" : "#4fc3f7",
-                display: "block",
-                marginBottom: "8px",
-              }}
-            >
-              Términos y Condiciones
-            </Link>
-            
-            
-            </>):(
-              <>
-               <Link
-              to="/deslin"
+            <Link
+              to={user?.rol ? "/cliente/deslin" : "/deslin"}
               style={{
                 textDecoration: "none",
                 color: theme === "light" ? "#007bff" : "#4fc3f7",
@@ -254,15 +201,6 @@ const PiePagina = () => {
             >
               Deslinde legal
             </Link>
-              
-              </>
-            )}
-
-
-
-
-
-           
           </Box>
         </Grid>
 
@@ -292,7 +230,7 @@ const PiePagina = () => {
           </Typography>
           <Box sx={{ display: "flex", gap: "15px", mt: 1 }}>
             <a
-              href={empresa.redes_sociales.facebook || defaultLinks.facebook}
+              href={empresa.redes_sociales.facebook || "#"}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Facebook"
@@ -304,7 +242,7 @@ const PiePagina = () => {
               />
             </a>
             <a
-              href={empresa.redes_sociales.instagram || defaultLinks.instagram}
+              href={empresa.redes_sociales.instagram || "#"}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
@@ -316,13 +254,13 @@ const PiePagina = () => {
               />
             </a>
             <a
-              href={empresa.redes_sociales.twitter || defaultLinks.twitter}
+              href={empresa.redes_sociales.web || "#"}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Twitter"
+              aria-label="Sitio web"
             >
               <FontAwesomeIcon
-                icon={faTwitter}
+                icon={faGlobe}
                 size="2x"
                 style={{ color: theme === "light" ? "#1DA1F2" : "#00aced" }}
               />

@@ -1,8 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useState, useEffect } from "react";
 import LayaoutEncabezado from './components/shared/layaouts/encabezados'
 import  ThemeProvider  from './components/shared/layaouts/ThemeContext.jsx'; 
 import { AuthProvider } from "./components/shared/layaouts/AuthContext.jsx";
-
+import ConnectionStatus from './components/shared/Errors/ConnectionStatus.jsx'
 //==================================PUBLICO=====================================================================
 import Inicio from "./components/public/incio";
 import Login from "./components/shared/autenticacion/login";
@@ -14,6 +15,7 @@ import CambiarPass from "./components/shared/autenticacion/recuperacionPass/camb
 import Politicas from "./components/public/PolitasP.jsx";
 import TerminosList from './components/public/terminosP.jsx'
 import Deslin from './components/public/deslinP.jsx'
+import LoadingSpinner from "./components/shared/looadSpiner/spinerLoando.jsx";
 
 //==================================CLIENTE=====================================================================
 import  PerfilCliente from "./components/client/perfilCliente.jsx";
@@ -23,18 +25,35 @@ import Terminos from './components/admin/terminos/terminos.jsx'
 
 //==================================ADMINSITRADOR=====================================================================
 import InicioAdm from './components/admin/menuadmin.jsx'
+import HistorialPoliticas from "./components/admin/politicas/historialP.jsx";
+import HistorialDeslindeLegal from "./components/admin/deslin/historialD.jsx";
 
 //===========================Rutas Privados=================================
 import  RutaPrivada  from "./components/shared/layaouts/contextoAutentication.jsx";
 import ErrorBoundary from "./components/shared/Errors/registroErrore.jsx";
 
 function App() {
+  const [loading, setLoading] = useState(true);
+
+  //Show a cargara la pagina
+  useEffect(() => {
+    //A cRAGAR LA PAGINA
+    const timer=setTimeout(()=>setLoading(false), 2000);
+    return()=>clearTimeout(timer);
+  },[]);
+
   return (
+
     <>
     <AuthProvider>
     < ThemeProvider>
+    <ConnectionStatus />
     <ErrorBoundary>
-     <Routes>
+      {loading?(
+        <LoadingSpinner></LoadingSpinner>
+      ):(
+        <>
+         <Routes>
       <Route path="/" element={<LayaoutEncabezado><Inicio /> </LayaoutEncabezado>} />
       <Route path="/login" element={<LayaoutEncabezado><Login /> </LayaoutEncabezado>} />
       <Route path="/RegistroValidacionCorreo" element={<LayaoutEncabezado><ProcesoRegistro  /> </LayaoutEncabezado>} />
@@ -55,12 +74,14 @@ function App() {
          <Route path="/cliente/politicas" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< Politicas/></LayaoutEncabezado></RutaPrivada>  }/>
          <Route path="/cliente/terminos" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< TerminosList/></LayaoutEncabezado></RutaPrivada>  }/>
          <Route path="/cliente/deslin" element={ <RutaPrivada rolesPermitidos={['Cliente']}> <LayaoutEncabezado>< Deslin/></LayaoutEncabezado></RutaPrivada>  }/>
-
-
-
             {/* Rutas para Cliente */}
             <Route path="/Administrador" element={ <RutaPrivada rolesPermitidos={['Administrador']}> <LayaoutEncabezado>< InicioAdm /></LayaoutEncabezado></RutaPrivada>  }/>
-      </Routes> 
+            <Route path="/Administrador/historialPoliticas" element={ <RutaPrivada rolesPermitidos={['Administrador']}> <LayaoutEncabezado>< HistorialPoliticas /></LayaoutEncabezado></RutaPrivada>  }/>
+            <Route path="/Administrador/historialDeslindeLegal" element={ <RutaPrivada rolesPermitidos={['Administrador']}> <LayaoutEncabezado>< HistorialDeslindeLegal/></LayaoutEncabezado></RutaPrivada>  }/>
+      </Routes>         
+         </>
+
+      )}
       </ErrorBoundary>
       </ThemeProvider>
       </AuthProvider>

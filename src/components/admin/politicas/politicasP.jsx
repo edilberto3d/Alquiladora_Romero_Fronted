@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useContext } from 'react';
+// Politicas.jsx
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import axios from 'axios';
-import Swal from 'sweetalert2';
-import withReactContent from 'sweetalert2-react-content';
 import { useFormik, FieldArray, FormikProvider } from 'formik';
 import * as yup from 'yup';
 import {
@@ -20,20 +19,43 @@ import {
   Grid,
   CircularProgress,
   Alert,
+  Snackbar,
+  TablePagination, // Importa TablePagination
 } from '@mui/material';
-import { Add, Delete, Edit } from '@mui/icons-material';
+import { Add, Delete, Edit, History } from '@mui/icons-material'; // Importa el ícono de historial
 import { ThemeContext } from '../../shared/layaouts/ThemeContext';
+import { Toast } from 'primereact/toast';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { useNavigate } from 'react-router-dom'; // Importa useNavigate
 
-const MySwal = withReactContent(Swal);
+// Función para obtener la fecha actual en la zona horaria de México
+const getMexicoDate = () => {
+  const options = {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  };
+  const formatter = new Intl.DateTimeFormat([], options);
+  const parts = formatter.formatToParts(new Date());
+  const dateParts = {};
+  parts.forEach(({ type, value }) => {
+    dateParts[type] = value;
+  });
+  return `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+};
 
 // Validaciones con Yup
 const validationSchema = yup.object().shape({
-  titulo: yup.string().required('El título es obligatorio').max(100, 'Máximo 100 caracteres'),
+  titulo: yup
+    .string()
+    .required('El título es obligatorio')
+    .max(50, 'Máximo 50 caracteres'),
   contenido: yup.string().required('El contenido es obligatorio'),
   fechaVigencia: yup
     .date()
     .required('La fecha de vigencia es obligatoria')
-    .min(new Date(), 'La fecha de vigencia no puede ser pasada'),
+    .min(new Date(getMexicoDate()), 'La fecha de vigencia no puede ser pasada'),
   secciones: yup
     .array()
     .of(
@@ -53,6 +75,13 @@ const Politicas = () => {
   const [editMode, setEditMode] = useState(false);
   const [currentVersion, setCurrentVersion] = useState(null);
   const { theme } = useContext(ThemeContext);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const toast = useRef(null);
+  const navigate = useNavigate(); // Inicializa useNavigate
+
+  // Estados para la paginación
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5); // Puedes ajustar el número por defecto
 
   const apiUrl = 'https://alquiladora-romero-backed-1.onrender.com/api/politicas';
 
@@ -60,6 +89,11 @@ const Politicas = () => {
     fetchCsrfToken();
     fetchPoliticas();
   }, []);
+
+  // Función para cerrar el Snackbar
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   const fetchCsrfToken = async () => {
     try {
@@ -69,13 +103,13 @@ const Politicas = () => {
       setCsrfToken(response.data.csrfToken);
     } catch (error) {
       console.error('Error al obtener el token CSRF', error);
+      toast.current.show({ severity: 'error', summary: 'Error', detail: 'Error al obtener el token CSRF', life: 3000 });
     }
   };
 
   const extractValue = (versioField) => {
     if (typeof versioField === 'object' && versioField !== null) {
-      // Ajusta según la estructura de tu objeto
-      return versioField.data || versioField.value || ''; // Modifica esto según corresponda
+      return versioField.data || versioField.value || '';
     }
     return versioField;
   };
@@ -83,31 +117,42 @@ const Politicas = () => {
   const fetchPoliticas = async () => {
     try {
       const response = await axios.get(apiUrl, { withCredentials: true });
-
-      // Procesamos los datos recibidos
-      const parsedData = response.data.map((politica) => ({
-        ...politica,
-        versio: extractValue(politica.versio),
-        secciones:
-          typeof politica.secciones === 'string'
-            ? JSON.parse(politica.secciones)
-            : politica.secciones || [],
-      }));
-
+  
+      const parsedData = response.data.map((politica) => {
+        const originalDate = politica.fechaVigencia
+          ? new Date(politica.fechaVigencia)
+          : new Date(getMexicoDate());
+  
+        // Sumar un día a la fecha original
+        originalDate.setDate(originalDate.getDate() + 1);
+  
+        return {
+          ...politica,
+          versio: extractValue(politica.versio),
+          fechaVigencia: originalDate.toISOString().split("T")[0],
+          secciones:
+            typeof politica.secciones === "string"
+              ? JSON.parse(politica.secciones)
+              : politica.secciones || [],
+        };
+      });
+  
       setPoliticas(parsedData);
       setLoading(false);
     } catch (error) {
-      console.error('Error al obtener políticas:', error);
-      setError('No se pudieron cargar las políticas');
+      console.error("Error al obtener políticas:", error);
+      setError("No se pudieron cargar las políticas");
       setLoading(false);
     }
   };
+  
+
 
   const formik = useFormik({
     initialValues: {
       titulo: '',
       contenido: '',
-      fechaVigencia: '',
+      fechaVigencia: getMexicoDate(),
       secciones: [{ titulo: '', contenido: '' }],
     },
     validationSchema,
@@ -121,10 +166,23 @@ const Politicas = () => {
       setEditMode(false);
       setCurrentVersion(null);
       fetchPoliticas();
+      // Reiniciar la paginación después de agregar/editar
+      setPage(0);
     },
   });
 
-  const { values, errors, touched, handleChange, handleSubmit, handleReset, setFieldValue } = formik;
+  const { values, errors, touched, handleChange, handleSubmit, handleReset, setFieldValue, setFieldTouched } = formik;
+
+  // Función para manejar el cambio de página
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  // Función para manejar el cambio de filas por página
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   const createPolitica = async (data) => {
     try {
@@ -132,10 +190,10 @@ const Politicas = () => {
         headers: { 'X-CSRF-Token': csrfToken },
         withCredentials: true,
       });
-      MySwal.fire('Éxito', 'Se creó la política correctamente', 'success');
+      toast.current.show({ severity: 'success', summary: 'Éxito', detail: 'Se creó la política correctamente', life: 3000 });
     } catch (error) {
       console.log('Error al crear la política:', error);
-      MySwal.fire('Error', 'No se pudo crear la política', 'error');
+      toast.current.show({ severity: 'error', summary: 'Error', detail: 'No se pudo crear la política', life: 3000 });
     }
   };
 
@@ -145,37 +203,35 @@ const Politicas = () => {
         headers: { 'X-CSRF-Token': csrfToken },
         withCredentials: true,
       });
-      MySwal.fire('Éxito', 'Se creó una nueva versión de la política', 'success');
+      toast.current.show({ severity: 'success', summary: 'Éxito', detail: 'Se creó una nueva versión de la política', life: 3000 });
     } catch (error) {
       console.error('Error al crear nueva versión:', error);
-      MySwal.fire('Error', 'No se pudo crear la nueva versión', 'error');
+      toast.current.show({ severity: 'error', summary: 'Error', detail: 'No se pudo crear la nueva versión', life: 3000 });
     }
   };
 
   const deletePolitica = async (id) => {
-    const confirm = await MySwal.fire({
-      title: '¿Estás seguro?',
-      text: 'Esta acción marcará la política como eliminada.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#4caf50',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
+    confirmDialog({
+      message: 'Esta acción marcará la política como eliminada.',
+      header: 'Confirmación de Eliminación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, eliminar',
+      rejectLabel: 'Cancelar',
+      acceptClassName: 'p-button-danger',
+      accept: async () => {
+        try {
+          await axios.delete(`${apiUrl}/${id}`, {
+            headers: { 'X-CSRF-Token': csrfToken },
+            withCredentials: true,
+          });
+          toast.current.show({ severity: 'success', summary: 'Eliminado', detail: 'Política eliminada correctamente', life: 3000 });
+          fetchPoliticas();
+        } catch (error) {
+          console.error('Error al eliminar política:', error);
+          toast.current.show({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la política', life: 3000 });
+        }
+      },
     });
-    if (confirm.isConfirmed) {
-      try {
-        await axios.delete(`${apiUrl}/${id}`, {
-          headers: { 'X-CSRF-Token': csrfToken },
-          withCredentials: true,
-        });
-        MySwal.fire('Eliminado', 'Política eliminada correctamente', 'success');
-        fetchPoliticas();
-      } catch (error) {
-        console.error('Error al eliminar política:', error);
-        MySwal.fire('Error', 'No se pudo eliminar la política', 'error');
-      }
-    }
   };
 
   const editPolitica = (politica) => {
@@ -187,6 +243,14 @@ const Politicas = () => {
     setEditMode(true);
   };
 
+  // Función para manejar el envío del formulario y marcar "secciones" como tocado si está vacío
+  const handleSubmitWrapper = (e) => {
+    if (values.secciones.length === 0) {
+      setFieldTouched('secciones', true);
+    }
+    handleSubmit(e);
+  };
+
   if (loading)
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -194,6 +258,9 @@ const Politicas = () => {
       </Box>
     );
   if (error) return <Alert severity="error">{error}</Alert>;
+
+  // Datos a mostrar en la tabla según la paginación
+  const paginatedPoliticas = politicas.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
     <Container
@@ -206,6 +273,11 @@ const Politicas = () => {
         boxShadow: 3,
       }}
     >
+      {/* Toast y ConfirmDialog */}
+      <Toast ref={toast} />
+      <ConfirmDialog />
+
+      {/* Título */}
       <Typography
         variant="h4"
         align="center"
@@ -215,8 +287,34 @@ const Politicas = () => {
         Gestión de Políticas de Privacidad
       </Typography>
 
+      {/* Formulario */}
       <FormikProvider value={formik}>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmitWrapper}>
+          {/* Resumen de errores */}
+          {Object.keys(errors).length > 0 && Object.keys(touched).length > 0 && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              <Typography variant="subtitle1">Por favor corrige los siguientes errores:</Typography>
+              <ul>
+                {Object.entries(errors).map(([key, value]) => {
+                  if (typeof value === 'string') {
+                    return <li key={key}>{value}</li>;
+                  } else if (Array.isArray(value)) {
+                    return value
+                      .map((err, index) => {
+                        const erroresSeccion = Object.values(err).filter(Boolean);
+                        return erroresSeccion.map((mensajeError, idx) => (
+                          <li key={`${key}-${index}-${idx}`}>{`Sección ${index + 1}: ${mensajeError}`}</li>
+                        ));
+                      })
+                      .flat();
+                  }
+                  return null;
+                })}
+              </ul>
+            </Alert>
+          )}
+
+          {/* Campo Título */}
           <TextField
             fullWidth
             label="Título"
@@ -231,6 +329,8 @@ const Politicas = () => {
               bgcolor: theme === 'dark' ? '#1e1e1e' : '#fff',
             }}
           />
+
+          {/* Campo Contenido */}
           <TextField
             fullWidth
             label="Contenido"
@@ -247,6 +347,8 @@ const Politicas = () => {
               bgcolor: theme === 'dark' ? '#1e1e1e' : '#fff',
             }}
           />
+
+          {/* Campo Fecha de Vigencia */}
           <TextField
             fullWidth
             label="Fecha de Vigencia"
@@ -258,12 +360,21 @@ const Politicas = () => {
             helperText={touched.fechaVigencia && errors.fechaVigencia}
             margin="normal"
             InputLabelProps={{ shrink: true }}
-            inputProps={{ min: new Date().toISOString().split('T')[0] }}
+            inputProps={{ min: getMexicoDate() }}
             variant="outlined"
             sx={{
               bgcolor: theme === 'dark' ? '#1e1e1e' : '#fff',
             }}
           />
+
+          {/* Mostrar error si no hay al menos una sección */}
+          {touched.secciones && errors.secciones && typeof errors.secciones === 'string' && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {errors.secciones}
+            </Alert>
+          )}
+
+          {/* Campo Dinámico Secciones */}
           <FieldArray name="secciones">
             {({ push, remove }) => (
               <Box>
@@ -287,6 +398,7 @@ const Politicas = () => {
                     >
                       <Grid container spacing={2} alignItems="center">
                         <Grid item xs={11}>
+                          {/* Título de la Sección */}
                           <TextField
                             fullWidth
                             label={`Título de la Sección ${index + 1}`}
@@ -307,6 +419,8 @@ const Politicas = () => {
                               bgcolor: theme === 'dark' ? '#2e2e2e' : '#fafafa',
                             }}
                           />
+
+                          {/* Contenido de la Sección */}
                           <TextField
                             fullWidth
                             label={`Contenido de la Sección ${index + 1}`}
@@ -331,13 +445,20 @@ const Politicas = () => {
                           />
                         </Grid>
                         <Grid item xs={1}>
-                          <IconButton color="error" onClick={() => remove(index)}>
+                          {/* Botón para eliminar sección */}
+                          <IconButton
+                            color="error"
+                            onClick={() => remove(index)}
+                            aria-label={`Eliminar sección ${index + 1}`}
+                          >
                             <Delete />
                           </IconButton>
                         </Grid>
                       </Grid>
                     </Paper>
                   ))}
+
+                {/* Botón para agregar nueva sección */}
                 <Button
                   variant="contained"
                   color="success"
@@ -350,6 +471,8 @@ const Politicas = () => {
               </Box>
             )}
           </FieldArray>
+
+          {/* Botones de envío */}
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
             {editMode && (
               <Button
@@ -369,6 +492,7 @@ const Politicas = () => {
               type="submit"
               variant="contained"
               color="primary"
+              disabled={formik.isSubmitting}
               sx={{
                 bgcolor: theme === 'dark' ? '#1976d2' : '#1976d2',
                 '&:hover': {
@@ -376,12 +500,19 @@ const Politicas = () => {
                 },
               }}
             >
-              {editMode ? 'Crear Nueva Versión' : 'Agregar Política'}
+              {formik.isSubmitting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : editMode ? (
+                'Crear Nueva Versión'
+              ) : (
+                'Agregar Política'
+              )}
             </Button>
           </Box>
         </form>
       </FormikProvider>
 
+      {/* Tabla de Políticas */}
       <Typography
         variant="h5"
         gutterBottom
@@ -401,41 +532,85 @@ const Politicas = () => {
             <TableRow sx={{ bgcolor: theme === 'dark' ? '#333' : '#0277bd' }}>
               <TableCell sx={{ color: theme === 'dark' ? '#ddd' : '#fff' }}>Título</TableCell>
               <TableCell sx={{ color: theme === 'dark' ? '#ddd' : '#fff' }}>Versión</TableCell>
-              <TableCell sx={{ color: theme === 'dark' ? '#ddd' : '#fff' }}>
-                Fecha de Vigencia
-              </TableCell>
+              <TableCell sx={{ color: theme === 'dark' ? '#ddd' : '#fff' }}>Fecha de Vigencia</TableCell>
               <TableCell sx={{ color: theme === 'dark' ? '#ddd' : '#fff' }}>Estado</TableCell>
               <TableCell sx={{ color: theme === 'dark' ? '#ddd' : '#fff' }}>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {politicas.map((politica) => (
+            {paginatedPoliticas.map((politica) => (
               <TableRow key={politica.id}>
                 <TableCell>{politica.titulo}</TableCell>
                 <TableCell>{politica.versio}</TableCell>
                 <TableCell>
-                  {new Date(politica.fechaVigencia).toLocaleDateString()}
+                  {new Date(politica.fechaVigencia).toLocaleDateString('es-MX', {
+                    timeZone: 'America/Mexico_City',
+                  })}
                 </TableCell>
-                <TableCell>{politica.estado}</TableCell>
                 <TableCell>
-  {politica.estado !== 'eliminado' && (
-    <>
-      <IconButton onClick={() => editPolitica(politica)} color="warning">
-        <Edit />
-      </IconButton>
-      {politica.estado !== 'eliminado' && (
-        <IconButton onClick={() => deletePolitica(politica.id)} color="error">
-          <Delete />
-        </IconButton>
-      )}
-    </>
-  )}
-</TableCell>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color:
+                        politica.estado === 'vigente'
+                          ? 'green'
+                          : politica.estado === 'no vigente'
+                          ? 'orange'
+                          : 'red',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {politica.estado.charAt(0).toUpperCase() + politica.estado.slice(1)}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  {politica.estado !== 'eliminado' && (
+                    <>
+                      <IconButton
+                        onClick={() => editPolitica(politica)}
+                        color="warning"
+                        aria-label={`Editar política ${politica.titulo}`}
+                      >
+                        <Edit />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => deletePolitica(politica.id)}
+                        color="error"
+                        aria-label={`Eliminar política ${politica.titulo}`}
+                      >
+                        <Delete />
+                      </IconButton>
+                    </>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+
+        {/* Paginación */}
+        <TablePagination
+          component="div"
+          count={politicas.length}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          rowsPerPageOptions={[5, 10, 25]}
+        />
       </Paper>
+
+      {/* Botón "Ver Historial" */}
+      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+        <Button
+          variant="outlined"
+          color="primary"
+          startIcon={<History />}
+          onClick={() => navigate('/Administrador/historialPoliticas')}
+        >
+          Ver Historial
+        </Button>
+      </Box>
     </Container>
   );
 };

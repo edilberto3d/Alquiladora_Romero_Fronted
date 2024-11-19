@@ -7,8 +7,12 @@ import {
     faBalanceScale,  
     faFileSignature, 
     faExclamationTriangle,
-    faSignOutAlt 
+    faSignOutAlt, 
+    faShoppingCart,
+    faMoon,
+    faSun
   } from '@fortawesome/free-solid-svg-icons';
+  import { useMediaQuery } from '@mui/material';
 
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -18,10 +22,14 @@ import Politicas from "./politicas/politicasP";
 import { useAuth } from "../shared/layaouts/AuthContext";
 import '../../css/admin/inicioMenu.css'
 import ErrorLogs from '../admin/inicio/errore'
-import { Box, Typography, Button, List, ListItem, Divider } from "@mui/material";
+import { Box, Typography, Button, List, ListItem, Divider ,IconButton} from "@mui/material";
 import { ThemeContext } from "../shared/layaouts/ThemeContext";
 import DeslindeLegal from "./deslin/deslin";
 import Usuarios from "./usuarios/usuarios";
+import Auditoria from "./auditoria/auditoriaLogin"
+import UsuariosSospechosos from "./auditoria/usuarioSospechoso";
+import { faBars, faTimes } from '@fortawesome/free-solid-svg-icons';
+
 
 const InicioAdm = () => {
   const [selectedSection, setSelectedSection] = useState("");
@@ -34,14 +42,20 @@ const InicioAdm = () => {
 
 
 
+
+
   const renderContent = () => {
     switch (selectedSection) {
       case "perfil":
         // return <CrudPerfil />;
       case "Terminos y Condiciones":
         return <Terminos />;
+        case "usuarioS":
+          return <UsuariosSospechosos />;
       case "usuarios":
         return <Usuarios />;
+        case "auditoriaLogin":
+        return <Auditoria />;
       case "datosEmpresa":
         return <DatosEmpresa />;
       case "politicasPrivacidad":
@@ -140,19 +154,48 @@ const InicioAdm = () => {
 
 
 const Sidebar = ({ onSelect, user, setShowRestaurantDetails }) => {
-  const { theme } = useContext(ThemeContext);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  const isSmallScreen = useMediaQuery('(max-width:768px)');
+  
+
+  
   const sidebarStyles = {
     width: "250px",
     backgroundColor: theme === "light" ? "#304d6a" : "#222",
     color: theme === "light" ? "#fff" : "#ccc",
     padding: "20px",
-    transition: "background-color 0.3s",
+    transition: "all 0.3s ease",
     minHeight: "100vh",
+    position: isSmallScreen ? 'fixed' : 'relative',
+    top: 0,
+    left: isSmallScreen ? (isMenuOpen ? 0 : '-250px') : 0,
+    zIndex: 1000,
   };
 
+  const hamburgerStyles = {
+    display: isSmallScreen ? 'block' : 'none',
+    position: 'fixed',
+    top: '20px',
+    left: '20px',
+    zIndex: 2000,
+    cursor: 'pointer',
+    color: theme === "light" ? "#000" : "#fff",
+  };
+
+  
 
   return (
     <Box sx={sidebarStyles}>
+    <div style={hamburgerStyles}>
+      <FontAwesomeIcon
+        icon={isMenuOpen ? faTimes : faBars}
+        size="2x"
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+      />
+    </div>
+    <div className={`sidebar-content ${isMenuOpen ? 'open' : ''}`}>
+
       <div className="profile-info">
         <div className="profile-pic">
           {user?.foto_perfil ? (
@@ -160,6 +203,13 @@ const Sidebar = ({ onSelect, user, setShowRestaurantDetails }) => {
           ) : (
             <FontAwesomeIcon icon={faUser} size="4x" />
           )}
+           <IconButton onClick={toggleTheme}>
+                    <FontAwesomeIcon
+                      icon={theme === "light" ? faMoon : faSun}
+                      style={{ color: theme === "light" ? "#333" : "#FFD700" }}
+                    />
+                  </IconButton>
+
         </div>
         <div className="country-flag">
           <div>
@@ -172,28 +222,35 @@ const Sidebar = ({ onSelect, user, setShowRestaurantDetails }) => {
       </div>
       <div className="menu">
     <ul>
-      <li onClick={() => { onSelect("usuarios"); setShowRestaurantDetails(false); }}>
+      <li onClick={() => { onSelect("usuarios"); setShowRestaurantDetails(false);setIsMenuOpen(false); }}>
         <FontAwesomeIcon icon={faUser} className="icon" /> Usuarios
       </li>
-      <li onClick={() => { onSelect("datosEmpresa"); setShowRestaurantDetails(false); }}>
+      <li onClick={() => { onSelect("datosEmpresa"); setShowRestaurantDetails(false); setIsMenuOpen(false);}}>
         <FontAwesomeIcon icon={faBuilding} className="icon" /> Datos de la Empresa
       </li>
-      <li onClick={() => { onSelect("politicasPrivacidad"); setShowRestaurantDetails(false); }}>
+      <li onClick={() => { onSelect("auditoriaLogin"); setShowRestaurantDetails(false); setIsMenuOpen(false);}}>
+        <FontAwesomeIcon icon={faBuilding} className="icon" /> Auditoria Login
+      </li>
+      <li onClick={() => { onSelect("politicasPrivacidad"); setShowRestaurantDetails(false); setIsMenuOpen(false);}}>
         <FontAwesomeIcon icon={faShieldAlt} className="icon" /> Políticas y Privacidad
       </li>
-      <li onClick={() => { onSelect("Deslinde legal"); setShowRestaurantDetails(false); }}>
+      <li onClick={() => { onSelect("Deslinde legal"); setShowRestaurantDetails(false);setIsMenuOpen(false); }}>
         <FontAwesomeIcon icon={faBalanceScale} className="icon" /> Deslinde legal
       </li>
-      <li onClick={() => { onSelect("Terminos y Condiciones"); setShowRestaurantDetails(false); }}>
+      <li onClick={() => { onSelect("Terminos y Condiciones"); setShowRestaurantDetails(false); setIsMenuOpen(false);}}>
         <FontAwesomeIcon icon={faFileSignature} className="icon" />Términos y Condiciones
       </li>
-      <li onClick={() => { onSelect("Errores de sistema"); setShowRestaurantDetails(false); }}>
+      <li onClick={() => { onSelect("Errores de sistema"); setShowRestaurantDetails(false); setIsMenuOpen(false);}}>
         <FontAwesomeIcon icon={faExclamationTriangle} className="icon" /> Errores de sistema
       </li>
-      <li onClick={() => { onSelect("cerrarSesion"); setShowRestaurantDetails(false); }}>
+      <li onClick={() => { onSelect("cerrarSesion"); setShowRestaurantDetails(false); setIsMenuOpen(false);}}>
         <FontAwesomeIcon icon={faSignOutAlt} className="icon" /> Cerrar sesión
       </li>
+      {/* <li onClick={() => { onSelect("usuarioS"); setShowRestaurantDetails(false); }}>
+        <FontAwesomeIcon icon={faSignOutAlt} className="icon" /> Usuario Sospechosos
+      </li>  */}
     </ul>
+  </div>
   </div>
   </Box>
   );

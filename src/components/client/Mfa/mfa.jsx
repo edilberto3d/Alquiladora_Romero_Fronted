@@ -8,11 +8,12 @@ import {
   Box,
   TextField,
   CircularProgress,
+  Snackbar,
+  Alert,
 } from '@mui/material';
-import { Toast } from 'primereact/toast';
 import axios from 'axios';
 
-const MFAComponent = ({ userId, }) => {
+const MFAComponent = ({ userId, setActivo }) => {
   const [isMfaEnabled, setIsMfaEnabled] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
@@ -20,7 +21,12 @@ const MFAComponent = ({ userId, }) => {
   const [loading, setLoading] = useState(false);
   const [verificationError, setVerificationError] = useState('');
   const [csrfToken, setCsrfToken] = useState('');
-  const toast = React.useRef(null);
+  const [loadingMfaStatus, setLoadingMfaStatus] = useState(true);
+
+  // Estados para Snackbar
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('info');
 
   // Obtener el token CSRF y el estado MFA al montar el componente
   useEffect(() => {
@@ -30,15 +36,17 @@ const MFAComponent = ({ userId, }) => {
           withCredentials: true,
         });
         setCsrfToken(response.data.csrfToken);
+        checkMfaStatus(response.data.csrfToken); // Mover checkMfaStatus aquí
       } catch (error) {
         console.error("Error al obtener el token CSRF", error);
+        setLoadingMfaStatus(false);
       }
     };
 
-    const checkMfaStatus = async () => {
+    const checkMfaStatus = async (token) => {
       try {
         const response = await axios.get(`https://alquiladora-romero-backed-1.onrender.com/api/mfa/mfa-status/${userId}`, {
-          headers: { 'X-CSRF-Token': csrfToken },
+          headers: { 'X-CSRF-Token': token },
           withCredentials: true,
         });
         setIsMfaEnabled(response.data.mfaEnabled);
@@ -47,14 +55,23 @@ const MFAComponent = ({ userId, }) => {
       }
     };
 
-    if (csrfToken) {
-      checkMfaStatus();
-    } else {
-      fetchCsrfToken();
-    }
-  }, [csrfToken, userId]);
+    fetchCsrfToken();
+  }, [userId]);
 
- 
+  const showSnackbar = (message, severity = 'info') => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
+
+  //Activar MFA
   const handleEnableMFA = async () => {
     setLoading(true);
     try {
@@ -70,11 +87,12 @@ const MFAComponent = ({ userId, }) => {
       );
       setQrCodeUrl(response.data.qrCode);
       setOpenModal(true); 
+      setActivo(true);
      
-      toast.current.show({ severity: 'info', summary: 'QR Generado', detail: 'Escanea el código QR con tu app de autenticación.', life: 5000 });
+      showSnackbar('QR Generado. Escanea el código QR con tu app de autenticación.', 'info');
     } catch (error) {
       console.error('Error al habilitar MFA:', error);
-      toast.current.show({ severity: 'error', summary: 'Error', detail: 'No se pudo habilitar MFA.', life: 5000 });
+      showSnackbar('No se pudo habilitar MFA.', 'error');
     } finally {
       setLoading(false);
     }
@@ -101,7 +119,7 @@ const MFAComponent = ({ userId, }) => {
       if (response.data.message === 'Código MFA verificado correctamente.') {
         setIsMfaEnabled(true);
         
-        toast.current.show({ severity: 'success', summary: 'Activado', detail: 'MFA activado correctamente.', life: 5000 });
+        showSnackbar('MFA activado correctamente.', 'success');
         handleCloseModal(); // Cerrar el modal
       } else {
         setVerificationError('Código incorrecto. Intenta nuevamente.');
@@ -111,7 +129,6 @@ const MFAComponent = ({ userId, }) => {
       setVerificationError('Error al verificar el código. Intenta nuevamente.');
     }
   };
-
 
   const handleDisableMFA = async () => {
     if (!verificationCode) {
@@ -142,8 +159,9 @@ const MFAComponent = ({ userId, }) => {
           }
         );
         setIsMfaEnabled(false); // Deshabilitar MFA
+        setActivo(false)
        
-        toast.current.show({ severity: 'info', summary: 'Desactivado', detail: 'MFA desactivado correctamente.', life: 5000 });
+        showSnackbar('MFA desactivado correctamente.', 'info');
         handleCloseModal(); // Cerrar el modal
       } else {
         setVerificationError('Código incorrecto. Intenta nuevamente.');
@@ -164,7 +182,6 @@ const MFAComponent = ({ userId, }) => {
 
   return (
     <div>
-      <Toast ref={toast} />
       <Typography variant="h6">Autenticación Multifactor</Typography>
 
       <FormControlLabel
@@ -220,6 +237,18 @@ const MFAComponent = ({ userId, }) => {
           </Button>
         </Box>
       </Modal>
+
+      {/* Snackbar para mostrar mensajes */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
 
       {isMfaEnabled && <Typography variant="body2" color="success.main">MFA activado exitosamente.</Typography>}
     </div>

@@ -1,17 +1,15 @@
 import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
-import { 
-  Box, CircularProgress, Typography, Paper, Grid, Alert, Divider, IconButton, Tooltip, Button ,AlertTitle
-} from '@mui/material';
-import { ErrorOutline, Refresh, ArrowBack, ArrowForward} from '@mui/icons-material';
+import { Box, CircularProgress, Typography, Paper, Grid, Alert, Divider, IconButton, Tooltip, Button, AlertTitle } from '@mui/material';
+import { ErrorOutline, Refresh, ArrowBack, ArrowForward } from '@mui/icons-material';
 import { ThemeContext } from "../../shared/layaouts/ThemeContext";
 
 const ErrorLogs = () => {
-  const { theme } = useContext(ThemeContext); 
+  const { theme } = useContext(ThemeContext);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const logsPerPage = 5; // Aumentamos el número de logs por página
+  const logsPerPage = 5;
   const [logs, setLogs] = useState([]);
 
   const fetchLogs = async () => {
@@ -32,7 +30,6 @@ const ErrorLogs = () => {
     fetchLogs();
   }, []);
 
-  // Cálculo de logs para la página actual
   const indexOfLastLog = currentPage * logsPerPage;
   const indexOfFirstLog = indexOfLastLog - logsPerPage;
   const currentLogs = logs.slice(indexOfFirstLog, indexOfLastLog);

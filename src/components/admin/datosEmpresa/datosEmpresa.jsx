@@ -99,13 +99,30 @@ const CrudEmpresa = () => {
 
   // Validación de formato de imagen
   const validateFile = (file) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/jpg',
+      'image/gif',
+      'image/webp',
+      'image/svg+xml'
+    ];
+    
+    const maxSize = 5 * 1024 * 1024; // Tamaño máximo permitido: 5 MB
+    
     if (!allowedTypes.includes(file.type)) {
-      showToast("error", "Formato inválido", "Solo se permiten imágenes JPG, PNG o JPEG");
+      showToast("error", "Formato inválido", "Solo se permiten imágenes JPG, PNG, JPEG, GIF, WEBP o SVG.");
       return false;
     }
+    
+    if (file.size > maxSize) {
+      showToast("error", "Archivo demasiado grande", "El tamaño máximo permitido es de 5 MB.");
+      return false;
+    }
+    
     return true;
   };
+  
 
   // Mostrar mensajes Toast
   const showToast = (severity, summary, detail) => {
