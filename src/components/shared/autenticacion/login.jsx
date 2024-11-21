@@ -42,7 +42,7 @@ const Login = () => {
           });
           setCsrfToken(response.data.csrfToken); 
         } catch (error) {
-          console.error("Error al obtener el token CSRF", error);
+         
         }
       };
   

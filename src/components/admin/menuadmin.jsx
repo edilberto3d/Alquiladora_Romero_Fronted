@@ -10,7 +10,8 @@ import {
     faSignOutAlt, 
     faShoppingCart,
     faMoon,
-    faSun
+    faSun,
+    faUserSecret 
   } from '@fortawesome/free-solid-svg-icons';
   import { useMediaQuery } from '@mui/material';
 
@@ -225,6 +226,9 @@ const Sidebar = ({ onSelect, user, setShowRestaurantDetails }) => {
       <li onClick={() => { onSelect("usuarios"); setShowRestaurantDetails(false);setIsMenuOpen(false); }}>
         <FontAwesomeIcon icon={faUser} className="icon" /> Usuarios
       </li>
+      <li onClick={() => { onSelect("usuarioS"); setShowRestaurantDetails(false); }}>
+      <FontAwesomeIcon icon={faUserSecret} className="icon" /> Usuario Sospechoso
+      </li> 
       <li onClick={() => { onSelect("datosEmpresa"); setShowRestaurantDetails(false); setIsMenuOpen(false);}}>
         <FontAwesomeIcon icon={faBuilding} className="icon" /> Datos de la Empresa
       </li>
@@ -243,12 +247,11 @@ const Sidebar = ({ onSelect, user, setShowRestaurantDetails }) => {
       <li onClick={() => { onSelect("Errores de sistema"); setShowRestaurantDetails(false); setIsMenuOpen(false);}}>
         <FontAwesomeIcon icon={faExclamationTriangle} className="icon" /> Errores de sistema
       </li>
+      
       <li onClick={() => { onSelect("cerrarSesion"); setShowRestaurantDetails(false); setIsMenuOpen(false);}}>
         <FontAwesomeIcon icon={faSignOutAlt} className="icon" /> Cerrar sesión
       </li>
-      {/* <li onClick={() => { onSelect("usuarioS"); setShowRestaurantDetails(false); }}>
-        <FontAwesomeIcon icon={faSignOutAlt} className="icon" /> Usuario Sospechosos
-      </li>  */}
+      
     </ul>
   </div>
   </div>

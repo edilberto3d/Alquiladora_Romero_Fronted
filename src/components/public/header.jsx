@@ -55,7 +55,6 @@ const Header = () => {
   const location = useLocation();
   const [csrfToken, setCsrfToken] = useState("");
 
-  //Realizamos la consulta de la base de datos
 
   // Obtener el token CSRF cuando se carga el componente
   useEffect(() => {
@@ -190,7 +189,7 @@ const Header = () => {
         const response = await axios.get("https://alquiladora-romero-backed-1.onrender.com/api/empresa");
         setDatosEmpresa(response.data);
       } catch (error) {
-        console.error("Error al obtener los datos de la empresa:", error);
+      
       }
     };
     fetchDatosEmpresa();
@@ -200,7 +199,7 @@ const Header = () => {
 
   //REalizamos la cosulta general de los usuarios
   useEffect(() => {
-    console.log("Este es lo que me obtiene user", user);
+   
   }, [user]);
 
   useEffect(() => {

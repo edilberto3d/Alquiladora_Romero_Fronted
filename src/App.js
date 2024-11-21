@@ -27,6 +27,7 @@ import Terminos from './components/admin/terminos/terminos.jsx'
 import InicioAdm from './components/admin/menuadmin.jsx'
 import HistorialPoliticas from "./components/admin/politicas/historialP.jsx";
 import HistorialDeslindeLegal from "./components/admin/deslin/historialD.jsx";
+import HistorialTerminos from "./components/admin/terminos/historialTerminos.jsx";
 
 //===========================Rutas Privados=================================
 import  RutaPrivada  from "./components/shared/layaouts/contextoAutentication.jsx";
@@ -78,7 +79,8 @@ function App() {
             <Route path="/Administrador" element={ <RutaPrivada rolesPermitidos={['Administrador']}> <LayaoutEncabezado>< InicioAdm /></LayaoutEncabezado></RutaPrivada>  }/>
             <Route path="/Administrador/historialPoliticas" element={ <RutaPrivada rolesPermitidos={['Administrador']}> <LayaoutEncabezado>< HistorialPoliticas /></LayaoutEncabezado></RutaPrivada>  }/>
             <Route path="/Administrador/historialDeslindeLegal" element={ <RutaPrivada rolesPermitidos={['Administrador']}> <LayaoutEncabezado>< HistorialDeslindeLegal/></LayaoutEncabezado></RutaPrivada>  }/>
-      </Routes>         
+            <Route path="/Administrador/historialTerminos" element={ <RutaPrivada rolesPermitidos={['Administrador']}> <LayaoutEncabezado>< HistorialTerminos/></LayaoutEncabezado></RutaPrivada>  }/>
+       </Routes>         
          </>
 
       )}

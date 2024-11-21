@@ -1,4 +1,4 @@
-// Politicas.jsx
+
 import React, { useEffect, useState, useContext, useRef } from 'react';
 import axios from 'axios';
 import { useFormik, FieldArray, FormikProvider } from 'formik';
@@ -20,13 +20,13 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
-  TablePagination, // Importa TablePagination
+  TablePagination, 
 } from '@mui/material';
-import { Add, Delete, Edit, History } from '@mui/icons-material'; // Importa el ícono de historial
+import { Add, Delete, Edit, History } from '@mui/icons-material'; 
 import { ThemeContext } from '../../shared/layaouts/ThemeContext';
 import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
-import { useNavigate } from 'react-router-dom'; // Importa useNavigate
+import { useNavigate } from 'react-router-dom'; 
 
 // Función para obtener la fecha actual en la zona horaria de México
 const getMexicoDate = () => {
@@ -77,11 +77,11 @@ const Politicas = () => {
   const { theme } = useContext(ThemeContext);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const toast = useRef(null);
-  const navigate = useNavigate(); // Inicializa useNavigate
+  const navigate = useNavigate(); 
 
   // Estados para la paginación
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5); // Puedes ajustar el número por defecto
+  const [rowsPerPage, setRowsPerPage] = useState(5); 
 
   const apiUrl = 'https://alquiladora-romero-backed-1.onrender.com/api/politicas';
 
@@ -546,8 +546,11 @@ const Politicas = () => {
                   {new Date(politica.fechaVigencia).toLocaleDateString('es-MX', {
                     timeZone: 'America/Mexico_City',
                   })}
+
                 </TableCell>
+
                 <TableCell>
+
                   <Typography
                     variant="body2"
                     sx={{
@@ -562,7 +565,9 @@ const Politicas = () => {
                   >
                     {politica.estado.charAt(0).toUpperCase() + politica.estado.slice(1)}
                   </Typography>
+
                 </TableCell>
+
                 <TableCell>
                   {politica.estado !== 'eliminado' && (
                     <>
@@ -583,6 +588,7 @@ const Politicas = () => {
                     </>
                   )}
                 </TableCell>
+                
               </TableRow>
             ))}
           </TableBody>
